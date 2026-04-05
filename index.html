@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare Ransomware Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e0d;
+    color: #c8ffe0;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  .dashboard {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 14px 18px;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0,255,120,0.1);
+  }
+
+  .top-bar h1 {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: #5a8a6e;
+  }
+
+  .top-bar-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .org-filters { display: flex; gap: 4px; }
+
+  .org-btn {
+    background: #111916;
+    border: 1px solid rgba(0,255,120,0.1);
+    color: #5a8a6e;
+    padding: 4px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  .org-btn:hover { border-color: rgba(0,255,120,0.3); color: #c8ffe0; }
+  .org-btn.active { background: rgba(0,255,120,0.08); border-color: #00ff78; color: #00ff78; }
+
+  .help-btn {
+    background: #111916;
+    border: 1px solid rgba(0,255,120,0.2);
+    color: #5a8a6e;
+    padding: 4px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  .help-btn:hover { border-color: #00ff78; color: #00ff78; }
+
+  .view-panel {
+    background: #0d1210;
+    border: 1px solid rgba(0,255,120,0.1);
+    overflow: hidden;
+  }
+
+  .view-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #5a8a6e;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(0,255,120,0.06);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ecg-panel { margin-bottom: 10px; }
+  .ecg-panel svg { width: 100%; display: block; }
+
+  .bottom-row { display: flex; gap: 10px; }
+  .sankey-panel { flex: 0 0 56%; }
+  .scatter-panel { flex: 1; }
+  .sankey-panel svg, .scatter-panel svg { width: 100%; display: block; }
+
+  .sankey-stages {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 30px 2px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #5a8a6e;
+    font-weight: 500;
+  }
+
+  .sankey-stages span {
+    text-align: center;
+    flex: 1;
+    transition: color 0.15s;
+  }
+
+  .sankey-stages span.highlighted {
+    color: #00ff78;
+  }
+
+  .view-controls {
+    display: flex;
+    gap: 8px;
+    padding: 4px 10px;
+    align-items: center;
+    font-size: 10px;
+    color: #c8ffe0;
+    border-bottom: 1px solid rgba(0,255,120,0.06);
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+
+  .view-controls select {
+    background: #111916;
+    border: 1px solid rgba(0,255,120,0.15);
+    color: #c8ffe0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    outline: none;
+  }
+
+  .mode-btn {
+    background: #111916;
+    border: 1px solid rgba(0,255,120,0.15);
+    color: #5a8a6e;
+    padding: 2px 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  .mode-btn:hover { border-color: rgba(0,255,120,0.3); color: #c8ffe0; }
+  .mode-btn.active { background: rgba(0,255,120,0.08); border-color: #00ff78; color: #00ff78; }
+
+  .ecg-grid-minor { stroke: rgba(0,255,120,0.03); stroke-width: 0.5; }
+  .ecg-grid-major { stroke: rgba(0,255,120,0.07); stroke-width: 1; }
+  .ecg-trace { fill: none; stroke-width: 2; stroke-linecap: round; }
+
+  .reset-btn {
+    background: #111916;
+    border: 1px solid rgba(0,255,120,0.2);
+    color: #5a8a6e;
+    padding: 2px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  .reset-btn:hover { border-color: #00ff78; color: #00ff78; }
+
+  .sankey-link { fill: none; transition: stroke-opacity 0.15s; cursor: pointer; }
+  .sankey-node rect { cursor: pointer; rx: 2; ry: 2; }
+  .sankey-node text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    fill: #c8ffe0;
+    pointer-events: none;
+  }
+
+  .severity-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 12px 4px;
+    font-size: 9px;
+    color: #5a8a6e;
+  }
+
+  .severity-gradient {
+    flex: 1;
+    height: 4px;
+    background: linear-gradient(to right, #00ff78, #ffcc00 45%, #ff2244);
+    opacity: 0.5;
+  }
+
+  .brush-info {
+    font-size: 11px;
+    color: #5a8a6e;
+    padding: 4px 12px;
+    min-height: 22px;
+    letter-spacing: 1px;
+  }
+
+  .brush-info span { color: #00ff78; font-weight: 500; }
+
+  .detail-panel {
+    position: absolute;
+    background: rgba(13,18,16,0.96);
+    border: 1px solid #00ff78;
+    padding: 10px 14px;
+    font-size: 11px;
+    z-index: 100;
+    min-width: 260px;
+    pointer-events: auto;
+  }
+
+  .detail-panel .detail-id {
+    color: #00ff78;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(0,255,120,0.06);
+  }
+
+  .detail-label { color: #5a8a6e; }
+
+  .detail-val { color: #c8ffe0; font-weight: 500; }
+
+  .detail-val.bad { color: #ff4444; }
+  .detail-val.good { color: #00ff78; }
+
+  .detail-close {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    cursor: pointer;
+    color: #5a8a6e;
+    font-size: 14px;
+  }
+
+  .detail-close:hover { color: #ff4444; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="top-bar">
+    <h1>HEALTHCARE RANSOMWARE 2024</h1>
+    <div class="top-bar-right">
+      <div class="org-filters" id="org-filters">
+        <button class="org-btn active" data-org="All">All</button>
+        <button class="org-btn" data-org="Hospital">Hospital</button>
+        <button class="org-btn" data-org="Clinic">Clinic</button>
+        <button class="org-btn" data-org="Pharma">Pharma</button>
+        <button class="org-btn" data-org="Research Lab">Lab</button>
+        <button class="org-btn" data-org="Insurance">Insurance</button>
+      </div>
+      <button class="help-btn" onclick="openExplanation()">? How to Read</button>
+    </div>
+  </div>
+
+  <!-- ECG VIEW -->
+  <div class="view-panel ecg-panel">
+    <div class="view-label"><span>ECG Monitor: Monthly Severity (brush to select months)</span></div>
+    <svg id="ecg-svg"></svg>
+    <div class="brush-info" id="brush-info">Brush months to filter views below. Click Sankey nodes to build a path filter.</div>
+    <div class="severity-bar">
+      <span>LOW SEVERITY</span><div class="severity-gradient"></div><span>CRITICAL</span>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-row">
+    <div class="view-panel sankey-panel">
+      <div class="view-label">
+        <span>Attack Pathology (click nodes to filter, multi-select per column)</span>
+        <button class="reset-btn" onclick="resetSankeySelection()">Reset</button>
+      </div>
+      <div class="sankey-stages" id="sankey-stages">
+        <span data-stage="entry">Entry Vector</span>
+        <span data-stage="encrypted">Encryption</span>
+        <span data-stage="stolen">Data Stolen</span>
+        <span data-stage="backup">Backup Lost</span>
+        <span data-stage="ransom">Paid Ransom</span>
+        <span data-stage="recovery">Recovery</span>
+      </div>
+      <svg id="sankey-svg"></svg>
+    </div>
+
+    <div class="view-panel scatter-panel" style="position:relative;">
+      <div class="view-label"><span>Incident Explorer (brush to select, click dot for details)</span></div>
+      <div class="view-controls">
+        <button class="mode-btn active" id="mode-scatter" onclick="setViewMode('scatter')">Scatter</button>
+        <button class="mode-btn" id="mode-grouped" onclick="setViewMode('grouped')">Grouped</button>
+        <span>Y:</span>
+        <select id="y-axis">
+          <option value="infection_rate" selected>Infection Rate %</option>
+          <option value="recovery_time">Recovery Days</option>
+          <option value="data_restored">Data Restored %</option>
+          <option value="facilities_affected">Facilities</option>
+          <option value="incidents">Incidents</option>
+        </select>
+        <span id="x-label">X:</span>
+        <select id="x-axis">
+          <option value="recovery_time" selected>Recovery Days</option>
+          <option value="infection_rate">Infection Rate %</option>
+          <option value="data_restored">Data Restored %</option>
+          <option value="facilities_affected">Facilities</option>
+          <option value="incidents">Incidents</option>
+        </select>
+        <select id="group-by" style="display:none;">
+          <option value="monitoring_freq">Monitoring Freq</option>
+          <option value="cyber_threats_tracked">Threats Tracked</option>
+          <option value="entry_method">Entry Method</option>
+          <option value="org_size">Org Size</option>
+        </select>
+      </div>
+      <svg id="scatter-svg"></svg>
+      <div id="detail-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+var rawData = [];
+var orgFiltered = [];
+var monthFiltered = [];
+var sankeyFiltered = [];
+var highlightSet = null;
+var currentOrg = 'All';
+var brushedMonths = null;
+var selectedSankeyNodes = {};
+var sankeyLinkIncidents = {};
+var sankeyNodeIncidents = {};
+var scatterX = 'recovery_time';
+var scatterY = 'infection_rate';
+var viewMode = 'scatter';
+var groupByField = 'monitoring_freq';
+var normBoundsLo = 0;
+var normBoundsHi = 1;
+
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+var FIELD_LABELS = {
+  infection_rate: 'Infection Rate %',
+  recovery_time: 'Recovery Days',
+  data_restored: 'Data Restored %',
+  facilities_affected: 'Facilities Affected',
+  incidents: 'Ransomware Incidents',
+  monitoring_freq: 'Monitoring Frequency',
+  cyber_threats_tracked: 'Threats Tracked',
+  entry_method: 'Entry Method',
+  org_size: 'Organization Size'
+};
+
+// ============================================================
+// NODE-TO-STAGE MAPPING
+// ============================================================
+var nodeStages = {};
+['Compromised Credentials','Exploited Vulnerability','Phishing Email',
+ 'RDP Exploit','Malicious Website','Infected Removable Media'].forEach(function(n) { nodeStages[n] = 'entry'; });
+['Encrypted: Yes','Encrypted: No'].forEach(function(n) { nodeStages[n] = 'encrypted'; });
+['Data Stolen: Yes','Data Stolen: No'].forEach(function(n) { nodeStages[n] = 'stolen'; });
+['Backup Lost: Yes','Backup Lost: No'].forEach(function(n) { nodeStages[n] = 'backup'; });
+['Paid Ransom: Yes','Paid Ransom: No'].forEach(function(n) { nodeStages[n] = 'ransom'; });
+['< 25%','25-50%','50-75%','75-100%'].forEach(function(n) { nodeStages[n] = 'recovery'; });
+
+// ============================================================
+// DATA MATCHING AND FILTERING
+// ============================================================
+function matchesNode(d, nodeName) {
+  if (nodeStages[nodeName] === 'entry') return d.entry_method === nodeName;
+  if (nodeName === 'Encrypted: Yes') return d.data_encrypted;
+  if (nodeName === 'Encrypted: No') return !d.data_encrypted;
+  if (nodeName === 'Data Stolen: Yes') return d.data_stolen;
+  if (nodeName === 'Data Stolen: No') return !d.data_stolen;
+  if (nodeName === 'Backup Lost: Yes') return d.backup_compromised;
+  if (nodeName === 'Backup Lost: No') return !d.backup_compromised;
+  if (nodeName === 'Paid Ransom: Yes') return d.paid_ransom;
+  if (nodeName === 'Paid Ransom: No') return !d.paid_ransom;
+  if (nodeName === '< 25%') return d.data_restored < 25;
+  if (nodeName === '25-50%') return d.data_restored >= 25 && d.data_restored < 50;
+  if (nodeName === '50-75%') return d.data_restored >= 50 && d.data_restored < 75;
+  if (nodeName === '75-100%') return d.data_restored >= 75;
+  return true;
+}
+
+// OR within each stage, AND across stages
+function filterBySankeyNodes(data) {
+  var result = data;
+  Object.entries(selectedSankeyNodes).forEach(function(pair) {
+    var stage = pair[0];
+    var nodeSet = pair[1];
+    if (!nodeSet || nodeSet.size === 0) return;
+    result = result.filter(function(d) {
+      for (var nn of nodeSet) {
+        if (matchesNode(d, nn)) return true;
+      }
+      return false;
+    });
+  });
+  return result;
+}
+
+function hasSankeySelection() {
+  return Object.values(selectedSankeyNodes).some(function(s) { return s && s.size > 0; });
+}
+
+function getSankeyLabels() {
+  var labels = [];
+  Object.values(selectedSankeyNodes).forEach(function(s) {
+    if (s) s.forEach(function(n) { labels.push(n); });
+  });
+  return labels;
+}
+
+function resetSankeySelection() {
+  selectedSankeyNodes = {};
+  sankeyFiltered = monthFiltered;
+  highlightSet = null;
+  clearStageHighlights();
+  renderECG(orgFiltered);
+  renderSankey(monthFiltered);
+  renderView3(sankeyFiltered);
+  restoreInfoText();
+}
+
+function restoreInfoText() {
+  var labels = getSankeyLabels();
+  if (labels.length > 0) {
+    document.getElementById('brush-info').innerHTML =
+      'Path filter: <span>' + labels.join(' + ') + '</span> (<span>' + sankeyFiltered.length + '</span> incidents)';
+  } else if (brushedMonths) {
+    document.getElementById('brush-info').innerHTML =
+      'Selected: <span>' + MONTHS[brushedMonths[0]] + '</span> to <span>' + MONTHS[brushedMonths[1]] + '</span> (<span>' + monthFiltered.length.toLocaleString() + '</span> incidents)';
+  } else {
+    document.getElementById('brush-info').innerHTML =
+      'Brush months to filter views below. Click Sankey nodes to build a path filter.';
+  }
+}
+
+function clearStageHighlights() {
+  document.querySelectorAll('.sankey-stages span').forEach(function(el) {
+    el.classList.remove('highlighted');
+  });
+}
+
+function highlightStage(stageName) {
+  document.querySelectorAll('.sankey-stages span').forEach(function(el) {
+    if (el.dataset.stage === stageName) {
+      el.classList.add('highlighted');
+    }
+  });
+}
+
+// ============================================================
+// SEVERITY AND COLORS
+// ============================================================
+function computeComposite(d) {
+  return (d.infection_rate / 90) * 0.3 +
+         (d.recovery_time / 120) * 0.25 +
+         (1 - d.data_restored / 91) * 0.25 +
+         (d.backup_compromised ? 1 : 0) * 0.2;
+}
+
+function severityColor(t) {
+  t = Math.max(0, Math.min(1, t));
+  if (t < 0.45) return d3.interpolateRgb('#00ff78', '#ffcc00')(t / 0.45);
+  return d3.interpolateRgb('#ffcc00', '#ff2244')((t - 0.45) / 0.55);
+}
+
+// Intentional colors: entry = neutral, yes = red, no = green, recovery = gradient
+var sankeyNodeColors = {
+  'Compromised Credentials': '#5a8a9a',
+  'Exploited Vulnerability': '#5a8a9a',
+  'Phishing Email': '#5a8a9a',
+  'RDP Exploit': '#5a8a9a',
+  'Malicious Website': '#5a8a9a',
+  'Infected Removable Media': '#5a8a9a',
+  'Encrypted: Yes': '#c44040',
+  'Encrypted: No': '#3a9a5a',
+  'Data Stolen: Yes': '#c44040',
+  'Data Stolen: No': '#3a9a5a',
+  'Backup Lost: Yes': '#c44040',
+  'Backup Lost: No': '#3a9a5a',
+  'Paid Ransom: Yes': '#c44040',
+  'Paid Ransom: No': '#3a9a5a',
+  '< 25%': '#c03030',
+  '25-50%': '#c08030',
+  '50-75%': '#6a9a4a',
+  '75-100%': '#2a8a50'
+};
+
+function getSankeyColor(name) {
+  return sankeyNodeColors[name] || '#5a8a6e';
+}
+
+function displayName(name) {
+  if (name.endsWith(': Yes')) return 'Yes';
+  if (name.endsWith(': No')) return 'No';
+  return name;
+}
+
+// ============================================================
+// SEEDED RANDOM FOR DETERMINISTIC WAVEFORMS
+// ============================================================
+var prngSeed = 1;
+
+function seedRandom(s) { prngSeed = s; }
+
+function seededRandom() {
+  prngSeed = (prngSeed * 16807) % 2147483647;
+  return (prngSeed - 1) / 2147483646;
+}
+
+// ============================================================
+// ECG WAVEFORM GENERATION
+// ============================================================
+function generateECGBeat(severity, numSamples) {
+  var points = [];
+  var i, t, y;
+
+  if (severity < 0.35) {
+    // Normal sinus rhythm
+    for (i = 0; i < numSamples; i++) {
+      t = i / numSamples;
+      y = 0;
+      y += 0.12 * Math.exp(-Math.pow((t - 0.12) / 0.03, 2));
+      y -= 0.08 * Math.exp(-Math.pow((t - 0.22) / 0.012, 2));
+      y += (0.8 + severity * 0.4) * Math.exp(-Math.pow((t - 0.26) / 0.015, 2));
+      y -= 0.15 * Math.exp(-Math.pow((t - 0.30) / 0.015, 2));
+      y += 0.18 * Math.exp(-Math.pow((t - 0.45) / 0.04, 2));
+      y += (seededRandom() - 0.5) * 0.012;
+      points.push(y);
+    }
+  } else if (severity < 0.7) {
+    // Arrhythmia
+    var irregularity = (severity - 0.35) / 0.35;
+    for (i = 0; i < numSamples; i++) {
+      t = i / numSamples;
+      y = 0;
+      y += 0.06 * Math.sin(t * Math.PI * 6) * irregularity;
+      y += 0.12 * (1 - irregularity * 0.7) * Math.exp(-Math.pow((t - 0.10 + irregularity * 0.03) / 0.03, 2));
+      y -= 0.06 * Math.exp(-Math.pow((t - 0.21) / 0.012, 2));
+      var rHeight = 0.7 + seededRandom() * 0.5 * irregularity;
+      y += rHeight * Math.exp(-Math.pow((t - 0.26) / (0.015 + irregularity * 0.012), 2));
+      y -= (0.12 + irregularity * 0.12) * Math.exp(-Math.pow((t - 0.31) / 0.015, 2));
+      y += 0.1 * irregularity * Math.exp(-Math.pow((t - 0.38) / 0.06, 2));
+      var tSign = irregularity > 0.5 ? -1 : 1;
+      y += tSign * 0.15 * Math.exp(-Math.pow((t - 0.48) / 0.04, 2));
+      if (irregularity > 0.4 && seededRandom() < 0.12) {
+        y += 0.35 * Math.exp(-Math.pow((t - 0.7) / 0.02, 2));
+      }
+      y += (seededRandom() - 0.5) * 0.03 * (1 + irregularity);
+      points.push(y);
+    }
+  } else {
+    // Cardiac arrest / flatline
+    var arrest = (severity - 0.7) / 0.3;
+    for (i = 0; i < numSamples; i++) {
+      t = i / numSamples;
+      y = 0;
+      if (arrest < 0.5) {
+        var chaos = arrest / 0.5;
+        y += 0.45 * (1 - chaos) * Math.sin(t * Math.PI * (8 + seededRandom() * 14));
+        y += 0.3 * Math.sin(t * Math.PI * (14 + seededRandom() * 8)) * (1 - chaos * 0.5);
+        y += (seededRandom() - 0.5) * 0.35;
+        y *= (1 - chaos * 0.6);
+      } else {
+        var flat = (arrest - 0.5) / 0.5;
+        y = (seededRandom() - 0.5) * 0.025 * (1 - flat * 0.8);
+        if (seededRandom() < 0.03 * (1 - flat)) {
+          y += 0.2 * Math.exp(-Math.pow((t - 0.5) / 0.03, 2));
+        }
+      }
+      points.push(y);
+    }
+  }
+  return points;
+}
+
+// ============================================================
+// DATA AGGREGATION
+// ============================================================
+function aggregateMonthly(data) {
+  var monthly = [];
+  for (var m = 0; m < 12; m++) {
+    var monthData = data.filter(function(d) { return d.month === m; });
+    monthly.push({
+      month: m,
+      count: monthData.length,
+      rawComposite: monthData.length > 0 ? d3.mean(monthData, function(d) { return d.composite; }) : 0
+    });
+  }
+  return monthly;
+}
+
+function normalizeMonthly(monthly) {
+  var range = normBoundsHi - normBoundsLo;
+  if (range === 0) range = 1;
+  return monthly.map(function(m) {
+    if (m.count === 0) return 0;
+    return Math.max(0, Math.min(1, (m.rawComposite - normBoundsLo) / range));
+  });
+}
+
+function computeNormBounds(data) {
+  var monthly = aggregateMonthly(data);
+  var vals = monthly.filter(function(m) { return m.count > 0; }).map(function(m) { return m.rawComposite; });
+  if (vals.length === 0) { normBoundsLo = 0; normBoundsHi = 1; return; }
+  var lo = d3.min(vals);
+  var hi = d3.max(vals);
+  var pad = (hi - lo) * 0.15;
+  normBoundsLo = lo - pad;
+  normBoundsHi = hi + pad;
+}
+
+// ============================================================
+// RENDER ECG
+// ============================================================
+function renderECG(data) {
+  var monthly = aggregateMonthly(data);
+  var severities = normalizeMonthly(monthly);
+  var container = document.querySelector('.ecg-panel');
+  var margin = { top: 30, right: 20, bottom: 30, left: 36 };
+  var width = container.clientWidth - margin.left - margin.right;
+  var height = 180;
+
+  var svg = d3.select('#ecg-svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  svg.selectAll('*').remove();
+
+  // Glow filter
+  var defs = svg.append('defs');
+  var glowFilter = defs.append('filter').attr('id', 'ecg-glow');
+  glowFilter.append('feGaussianBlur').attr('stdDeviation', '2.5').attr('result', 'blurred');
+  var merge = glowFilter.append('feMerge');
+  merge.append('feMergeNode').attr('in', 'blurred');
+  merge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+  var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+  // Grid
+  var gridSize = 16;
+  for (var x = 0; x <= width; x += gridSize) {
+    g.append('line')
+      .attr('class', x % (gridSize * 5) === 0 ? 'ecg-grid-major' : 'ecg-grid-minor')
+      .attr('x1', x).attr('y1', 0).attr('x2', x).attr('y2', height);
+  }
+  for (var y = 0; y <= height; y += gridSize) {
+    g.append('line')
+      .attr('class', y % (gridSize * 5) === 0 ? 'ecg-grid-major' : 'ecg-grid-minor')
+      .attr('x1', 0).attr('y1', y).attr('x2', width).attr('y2', y);
+  }
+
+  var xScale = d3.scaleLinear().domain([0, 12]).range([0, width]);
+  var yScale = d3.scaleLinear().domain([-0.6, 1.2]).range([height, 0]);
+  var samplesPerMonth = Math.floor(width / 12 / 2);
+
+  var highlightGroup = g.append('g').attr('class', 'ecg-highlights');
+
+  // Label
+  g.append('text').attr('x', -4).attr('y', -18)
+    .attr('fill', '#5a8a6e').attr('font-size', 9)
+    .attr('font-family', "'IBM Plex Mono', monospace")
+    .attr('letter-spacing', '1px').text('SEVERITY SCORE');
+
+  // Generate waveforms
+  var allPoints = [];
+  monthly.forEach(function(monthData, m) {
+    seedRandom((m + 1) * 1000);
+    var beat = generateECGBeat(severities[m], samplesPerMonth);
+    var monthStart = xScale(m);
+    var monthWidth = xScale(1) - xScale(0);
+    var dx = monthWidth / beat.length;
+    beat.forEach(function(yVal, i) {
+      allPoints.push({ x: monthStart + i * dx, y: yScale(yVal), month: m });
+    });
+  });
+
+  // Draw traces
+  for (var m = 0; m < 12; m++) {
+    var monthPoints = allPoints.filter(function(p) { return p.month === m; });
+    if (monthPoints.length < 2) continue;
+
+    var color = severityColor(severities[m]);
+    var lineGen = d3.line().x(function(d) { return d.x; }).y(function(d) { return d.y; }).curve(d3.curveBasis);
+
+    g.append('path').datum(monthPoints)
+      .attr('class', 'ecg-trace')
+      .attr('d', lineGen)
+      .attr('stroke', color)
+      .style('filter', 'url(#ecg-glow)');
+
+    // Connect to previous month
+    if (m > 0) {
+      var prevPoints = allPoints.filter(function(p) { return p.month === m - 1; });
+      var lastPt = prevPoints[prevPoints.length - 1];
+      var firstPt = monthPoints[0];
+      if (lastPt && firstPt) {
+        g.append('line')
+          .attr('x1', lastPt.x).attr('y1', lastPt.y)
+          .attr('x2', firstPt.x).attr('y2', firstPt.y)
+          .attr('stroke', severityColor((severities[m - 1] + severities[m]) / 2))
+          .attr('stroke-width', 2)
+          .style('filter', 'url(#ecg-glow)');
+      }
+    }
+
+    // Severity score label
+    g.append('text')
+      .attr('x', xScale(m + 0.5)).attr('y', -6)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 11).attr('font-weight', 600)
+      .attr('fill', color)
+      .attr('font-family', "'IBM Plex Mono', monospace")
+      .text(Math.round(severities[m] * 100));
+
+    // Month label
+    g.append('text')
+      .attr('x', xScale(m + 0.5)).attr('y', height + 14)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 10).attr('font-weight', 500)
+      .attr('fill', '#5a8a6e')
+      .attr('font-family', "'IBM Plex Mono', monospace")
+      .text(MONTHS[m]);
+
+    // Incident count below month
+    if (monthly[m].count > 0) {
+      g.append('text')
+        .attr('x', xScale(m + 0.5)).attr('y', height + 24)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 8).attr('fill', '#2d4a3a')
+        .attr('font-family', "'IBM Plex Mono', monospace")
+        .text(monthly[m].count);
+    }
+  }
+
+  // Brush interaction
+  var brush = d3.brushX()
+    .extent([[0, 0], [width, height]])
+    .on('brush end', function(event) {
+      if (!event.selection) {
+        brushedMonths = null;
+        monthFiltered = orgFiltered;
+        selectedSankeyNodes = {};
+        sankeyFiltered = monthFiltered;
+        highlightSet = null;
+        highlightGroup.selectAll('*').remove();
+        clearStageHighlights();
+        renderECG(orgFiltered);
+        renderSankey(monthFiltered);
+        renderView3(sankeyFiltered);
+        restoreInfoText();
+        return;
+      }
+      var sel = event.selection;
+      var m0 = Math.max(0, Math.floor(xScale.invert(sel[0])));
+      var m1 = Math.min(11, Math.floor(xScale.invert(sel[1])));
+      brushedMonths = [m0, m1];
+      monthFiltered = orgFiltered.filter(function(d) { return d.month >= m0 && d.month <= m1; });
+      selectedSankeyNodes = {};
+      sankeyFiltered = monthFiltered;
+      highlightSet = null;
+      clearStageHighlights();
+      document.getElementById('brush-info').innerHTML =
+        'Selected: <span>' + MONTHS[m0] + '</span> to <span>' + MONTHS[m1] + '</span> (<span>' + monthFiltered.length.toLocaleString() + '</span> incidents)';
+      renderSankey(monthFiltered);
+      renderView3(sankeyFiltered);
+    });
+
+  g.append('g').attr('class', 'ecg-brush').call(brush);
+
+  // Store refs for cross-view highlighting
+  window.ecgHighlightGroup = highlightGroup;
+  window.ecgXScale = xScale;
+  window.ecgHeight = height;
+  window.ecgSeverities = severities;
+}
+
+function highlightECG(ids) {
+  var g = window.ecgHighlightGroup;
+  var xScale = window.ecgXScale;
+  var h = window.ecgHeight;
+  if (!g) return;
+  g.selectAll('*').remove();
+  if (!ids || ids.size === 0) return;
+
+  var monthCounts = Array(12).fill(0);
+  var monthTotals = Array(12).fill(0);
+  orgFiltered.forEach(function(d) {
+    monthTotals[d.month]++;
+    if (ids.has(d.id)) monthCounts[d.month]++;
+  });
+
+  for (var m = 0; m < 12; m++) {
+    if (monthCounts[m] === 0) continue;
+    var proportion = monthCounts[m] / (monthTotals[m] || 1);
+    g.append('rect')
+      .attr('x', xScale(m)).attr('y', 0)
+      .attr('width', xScale(1) - xScale(0)).attr('height', h)
+      .attr('fill', severityColor(window.ecgSeverities[m]))
+      .attr('opacity', 0.08 + proportion * 0.15);
+  }
+}
+
+// ============================================================
+// RENDER SANKEY
+// ============================================================
+function renderSankey(data) {
+  sankeyLinkIncidents = {};
+  sankeyNodeIncidents = {};
+
+  // Node order: Yes (bad) BEFORE No (good) at each stage
+  // Recovery: worst to best (< 25% at top, 75-100% at bottom)
+  var nodeNames = [
+    'Compromised Credentials', 'Exploited Vulnerability', 'Phishing Email',
+    'RDP Exploit', 'Malicious Website', 'Infected Removable Media',
+    'Encrypted: Yes', 'Encrypted: No',
+    'Data Stolen: Yes', 'Data Stolen: No',
+    'Backup Lost: Yes', 'Backup Lost: No',
+    'Paid Ransom: Yes', 'Paid Ransom: No',
+    '< 25%', '25-50%', '50-75%', '75-100%'
+  ];
+
+  function recoveryBin(val) {
+    if (val < 25) return '< 25%';
+    if (val < 50) return '25-50%';
+    if (val < 75) return '50-75%';
+    return '75-100%';
+  }
+
+  var nodeIndex = {};
+  nodeNames.forEach(function(name, i) { nodeIndex[name] = i; });
+
+  var flowCounts = {};
+
+  data.forEach(function(d) {
+    var path = [
+      d.entry_method,
+      d.data_encrypted ? 'Encrypted: Yes' : 'Encrypted: No',
+      d.data_stolen ? 'Data Stolen: Yes' : 'Data Stolen: No',
+      d.backup_compromised ? 'Backup Lost: Yes' : 'Backup Lost: No',
+      d.paid_ransom ? 'Paid Ransom: Yes' : 'Paid Ransom: No',
+      recoveryBin(d.data_restored)
+    ];
+
+    for (var i = 0; i < path.length - 1; i++) {
+      var key = path[i] + '|||' + path[i + 1];
+      flowCounts[key] = (flowCounts[key] || 0) + 1;
+      if (!sankeyLinkIncidents[key]) sankeyLinkIncidents[key] = new Set();
+      sankeyLinkIncidents[key].add(d.id);
+    }
+
+    path.forEach(function(nodeName) {
+      if (!sankeyNodeIncidents[nodeName]) sankeyNodeIncidents[nodeName] = new Set();
+      sankeyNodeIncidents[nodeName].add(d.id);
+    });
+  });
+
+  var nodes = nodeNames.map(function(name) { return { name: name }; });
+  var links = [];
+
+  Object.entries(flowCounts).forEach(function(pair) {
+    var key = pair[0];
+    var value = pair[1];
+    var parts = key.split('|||');
+    var src = parts[0];
+    var tgt = parts[1];
+    if (nodeIndex[src] !== undefined && nodeIndex[tgt] !== undefined) {
+      links.push({ source: nodeIndex[src], target: nodeIndex[tgt], value: value });
+    }
+  });
+
+  var container = document.querySelector('.sankey-panel');
+  var fullWidth = container.clientWidth;
+  var fullHeight = 380;
+  var margin = { top: 4, right: 90, bottom: 4, left: 180 };
+  var w = fullWidth - margin.left - margin.right;
+  var h = fullHeight - margin.top - margin.bottom;
+
+  var svg = d3.select('#sankey-svg').attr('width', fullWidth).attr('height', fullHeight);
+  svg.selectAll('*').remove();
+
+  var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+  if (links.length === 0) {
+    g.append('text').attr('x', w / 2).attr('y', h / 2)
+      .attr('text-anchor', 'middle').attr('fill', '#5a8a6e').attr('font-size', 11)
+      .text('No incidents in current selection');
+    return;
+  }
+
+  var sankey = d3.sankey()
+    .nodeId(function(d) { return d.index; })
+    .nodeWidth(12)
+    .nodePadding(10)
+    .nodeAlign(d3.sankeyLeft)
+    .nodeSort(null)
+    .extent([[0, 0], [w, h]]);
+
+  var graph = sankey({
+    nodes: nodes.map(function(d) { return Object.assign({}, d); }),
+    links: links.map(function(d) { return Object.assign({}, d); })
+  });
+
+  // Draw links with HIGHER default opacity
+  var linkPaths = g.append('g').selectAll('path')
+    .data(graph.links).join('path')
+    .attr('class', 'sankey-link')
+    .attr('d', d3.sankeyLinkHorizontal())
+    .attr('stroke-width', function(d) { return Math.max(1, d.width); })
+    .attr('stroke', function(d) { return getSankeyColor(d.target.name); })
+    .attr('stroke-opacity', 0.3);
+
+  // Draw nodes
+  var nodeGroups = g.append('g').selectAll('g')
+    .data(graph.nodes).join('g')
+    .attr('class', 'sankey-node')
+    .attr('transform', function(d) { return 'translate(' + d.x0 + ',' + d.y0 + ')'; });
+
+  nodeGroups.append('rect')
+    .attr('width', function(d) { return d.x1 - d.x0; })
+    .attr('height', function(d) { return Math.max(1, d.y1 - d.y0); })
+    .attr('fill', function(d) { return getSankeyColor(d.name); })
+    .attr('stroke', 'none')
+    .attr('stroke-width', 0);
+
+  nodeGroups.append('text')
+    .attr('class', 'sankey-label')
+    .attr('x', function(d) {
+      // Entry vectors: label on LEFT side
+      if (nodeStages[d.name] === 'entry') return -4;
+      return (d.x1 - d.x0) + 4;
+    })
+    .attr('y', function(d) { return (d.y1 - d.y0) / 2; })
+    .attr('dy', '0.35em')
+    .attr('text-anchor', function(d) {
+      return nodeStages[d.name] === 'entry' ? 'end' : 'start';
+    })
+    .attr('font-size', 10)
+    .text(function(d) {
+      var pct = data.length > 0 ? ((d.value / data.length) * 100).toFixed(0) : 0;
+      return displayName(d.name) + ' (' + pct + '%)';
+    });
+
+  // Hover: highlight stage title
+  nodeGroups.on('mouseenter', function(event, d) {
+    var stage = nodeStages[d.name];
+    highlightStage(stage);
+  }).on('mouseleave', function() {
+    clearStageHighlights();
+    // Re-highlight selected stages
+    Object.keys(selectedSankeyNodes).forEach(function(stage) {
+      if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
+        highlightStage(stage);
+      }
+    });
+  });
+
+  // Click: multi-select per stage
+  nodeGroups.on('click', function(event, d) {
+    var stage = nodeStages[d.name];
+
+    if (!selectedSankeyNodes[stage]) {
+      selectedSankeyNodes[stage] = new Set();
+    }
+
+    // Toggle this node
+    if (selectedSankeyNodes[stage].has(d.name)) {
+      selectedSankeyNodes[stage].delete(d.name);
+      if (selectedSankeyNodes[stage].size === 0) {
+        delete selectedSankeyNodes[stage];
+      }
+    } else {
+      selectedSankeyNodes[stage].add(d.name);
+    }
+
+    // Check if this selection would produce any results
+    var testFiltered = filterBySankeyNodes(monthFiltered);
+
+    if (testFiltered.length === 0) {
+      // Revert the selection
+      if (selectedSankeyNodes[stage]) {
+        selectedSankeyNodes[stage].delete(d.name);
+        if (selectedSankeyNodes[stage].size === 0) {
+          delete selectedSankeyNodes[stage];
+        }
+      }
+      // Flash a message
+      document.getElementById('brush-info').innerHTML =
+        'No incidents match <span>' + d.name + '</span> with current selection';
+      setTimeout(function() { restoreInfoText(); }, 2000);
+      return;
+    }
+
+    sankeyFiltered = testFiltered;
+
+    if (!hasSankeySelection()) {
+      resetSankeySelection();
+      return;
+    }
+
+    var labels = getSankeyLabels();
+    document.getElementById('brush-info').innerHTML =
+      'Path filter: <span>' + labels.join(' + ') + '</span> (<span>' + sankeyFiltered.length + '</span> incidents)';
+
+    // White border on selected nodes
+    nodeGroups.selectAll('rect')
+      .attr('stroke', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        return stageSet && stageSet.has(nd.name) ? '#fff' : 'none';
+      })
+      .attr('stroke-width', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        return stageSet && stageSet.has(nd.name) ? 2 : 0;
+      });
+
+    // Highlight only flows that pass through the FILTERED incidents
+    var filteredIds = new Set(sankeyFiltered.map(function(dd) { return dd.id; }));
+    linkPaths.attr('stroke-opacity', function(link) {
+      var key = link.source.name + '|||' + link.target.name;
+      var linkIds = sankeyLinkIncidents[key] || new Set();
+      var overlap = 0;
+      for (var id of linkIds) {
+        if (filteredIds.has(id)) overlap++;
+      }
+      return overlap > 0 ? 0.5 : 0.04;
+    });
+
+    // Highlight stage titles
+    clearStageHighlights();
+    Object.keys(selectedSankeyNodes).forEach(function(stage) {
+      if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
+        highlightStage(stage);
+      }
+    });
+
+    // Update percentage labels to reflect filtered subset
+    var filteredTotal = sankeyFiltered.length;
+    nodeGroups.selectAll('.sankey-label').text(function(nd) {
+      var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+      var matchCount = 0;
+      for (var id of nodeIds) {
+        if (filteredIds.has(id)) matchCount++;
+      }
+      var pct = filteredTotal > 0 ? ((matchCount / filteredTotal) * 100).toFixed(0) : 0;
+      return displayName(nd.name) + ' (' + pct + '%)';
+    });
+
+    // Dim nodes that have zero matching incidents (not clickable)
+    nodeGroups.selectAll('rect').attr('opacity', function(nd) {
+      var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+      if (stageSet && stageSet.has(nd.name)) return 1;
+      var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+      var hasMatch = false;
+      for (var id of nodeIds) {
+        if (filteredIds.has(id)) { hasMatch = true; break; }
+      }
+      return hasMatch ? 1 : 0.15;
+    });
+
+    nodeGroups.selectAll('.sankey-label').attr('opacity', function(nd) {
+      var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+      if (stageSet && stageSet.has(nd.name)) return 1;
+      var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+      var hasMatch = false;
+      for (var id of nodeIds) {
+        if (filteredIds.has(id)) { hasMatch = true; break; }
+      }
+      return hasMatch ? 1 : 0.3;
+    });
+
+    // Update other views
+    renderECG(sankeyFiltered);
+    renderView3(sankeyFiltered);
+  });
+
+  // Store refs
+  window.sankeyLinkPaths = linkPaths;
+  window.sankeyNodeGroups = nodeGroups;
+}
+
+function highlightSankey(ids) {
+  var linkPaths = window.sankeyLinkPaths;
+  if (!linkPaths) return;
+
+  if (!ids || ids.size === 0) {
+    linkPaths.attr('stroke-opacity', 0.3);
+    return;
+  }
+
+  linkPaths.attr('stroke-opacity', function(d) {
+    var key = d.source.name + '|||' + d.target.name;
+    var linkIds = sankeyLinkIncidents[key] || new Set();
+    var overlap = 0;
+    for (var id of linkIds) {
+      if (ids.has(id)) overlap++;
+    }
+    return overlap > 0 ? 0.5 : 0.04;
+  });
+}
+
+// ============================================================
+// VIEW 3: DUAL MODE (SCATTER / GROUPED)
+// ============================================================
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('mode-scatter').classList.toggle('active', mode === 'scatter');
+  document.getElementById('mode-grouped').classList.toggle('active', mode === 'grouped');
+  document.getElementById('x-axis').style.display = mode === 'scatter' ? '' : 'none';
+  document.getElementById('x-label').style.display = mode === 'scatter' ? '' : 'none';
+  document.getElementById('group-by').style.display = mode === 'grouped' ? '' : 'none';
+  renderView3(sankeyFiltered);
+}
+
+function renderView3(data) {
+  document.getElementById('detail-container').innerHTML = '';
+  if (viewMode === 'scatter') {
+    renderScatter(data);
+  } else {
+    renderGrouped(data);
+  }
+}
+
+function closeDetailPanel() {
+  document.getElementById('detail-container').innerHTML = '';
+}
+
+function showDetailPanel(d, event) {
+  var container = document.getElementById('detail-container');
+  var badClass = function(val, threshold, lower) {
+    if (lower) return val < threshold ? 'good' : 'bad';
+    return val > threshold ? 'good' : 'bad';
+  };
+
+  var panel = document.createElement('div');
+  panel.className = 'detail-panel';
+  panel.style.right = '16px';
+  panel.style.top = '60px';
+
+  var closeBtn = document.createElement('div');
+  closeBtn.className = 'detail-close';
+  closeBtn.textContent = '\u00D7';
+  closeBtn.addEventListener('click', closeDetailPanel);
+  panel.appendChild(closeBtn);
+
+  var rows = [
+    ['', d.id, 'detail-id'],
+    ['Organization', d.org_type + ' (' + d.org_size + ')'],
+    ['Entry Method', d.entry_method],
+    ['Infection Rate', d.infection_rate.toFixed(1) + '%', badClass(d.infection_rate, 50, true)],
+    ['Recovery Time', d.recovery_time + ' days', badClass(d.recovery_time, 40, true)],
+    ['Data Restored', d.data_restored.toFixed(1) + '%', badClass(d.data_restored, 50, false)],
+    ['Facilities Affected', d.facilities_affected + ''],
+    ['Backup Compromised', d.backup_compromised ? 'YES' : 'NO', d.backup_compromised ? 'bad' : 'good'],
+    ['Data Encrypted', d.data_encrypted ? 'YES' : 'NO', d.data_encrypted ? 'bad' : 'good'],
+    ['Data Stolen', d.data_stolen ? 'YES' : 'NO', d.data_stolen ? 'bad' : 'good'],
+    ['Paid Ransom', d.paid_ransom ? 'YES' : 'NO', d.paid_ransom ? 'bad' : 'good'],
+    ['Monitoring Freq', d.monitoring_freq],
+    ['Threats Tracked', d.cyber_threats_tracked]
+  ];
+
+  rows.forEach(function(row) {
+    if (row[2] === 'detail-id') {
+      var idDiv = document.createElement('div');
+      idDiv.className = 'detail-id';
+      idDiv.textContent = row[1];
+      panel.appendChild(idDiv);
+      return;
+    }
+    var rowDiv = document.createElement('div');
+    rowDiv.className = 'detail-row';
+    var label = document.createElement('span');
+    label.className = 'detail-label';
+    label.textContent = row[0];
+    var val = document.createElement('span');
+    val.className = 'detail-val' + (row[2] ? ' ' + row[2] : '');
+    val.textContent = row[1];
+    rowDiv.appendChild(label);
+    rowDiv.appendChild(val);
+    panel.appendChild(rowDiv);
+  });
+
+  container.innerHTML = '';
+  container.appendChild(panel);
+}
+
+function renderScatter(data) {
+  var container = document.querySelector('.scatter-panel');
+  var fullWidth = container.clientWidth;
+  var fullHeight = 380;
+  var margin = { top: 10, right: 16, bottom: 40, left: 50 };
+  var w = fullWidth - margin.left - margin.right;
+  var h = fullHeight - margin.top - margin.bottom;
+
+  var svg = d3.select('#scatter-svg').attr('width', fullWidth).attr('height', fullHeight);
+  svg.selectAll('*').remove();
+  var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+  if (data.length === 0) {
+    g.append('text').attr('x', w / 2).attr('y', h / 2)
+      .attr('text-anchor', 'middle').attr('fill', '#5a8a6e').text('No incidents in selection');
+    return;
+  }
+
+  var xVal = function(d) { return d[scatterX]; };
+  var yVal = function(d) { return d[scatterY]; };
+
+  var xScale = d3.scaleLinear()
+    .domain([d3.min(data, xVal) * 0.95, d3.max(data, xVal) * 1.05]).nice().range([0, w]);
+  var yScale = d3.scaleLinear()
+    .domain([d3.min(data, yVal) * 0.95, d3.max(data, yVal) * 1.05]).nice().range([h, 0]);
+
+  // Axes with grid
+  g.append('g').attr('transform', 'translate(0,' + h + ')')
+    .call(d3.axisBottom(xScale).ticks(6).tickSize(-h))
+    .selectAll('line').attr('stroke', 'rgba(0,255,120,0.05)');
+  g.append('g').call(d3.axisLeft(yScale).ticks(6).tickSize(-w))
+    .selectAll('line').attr('stroke', 'rgba(0,255,120,0.05)');
+  g.selectAll('.domain').attr('stroke', 'rgba(0,255,120,0.1)');
+  g.selectAll('.tick text').attr('fill', '#5a8a6e').attr('font-family', "'IBM Plex Mono', monospace").attr('font-size', 9);
+
+  // Axis labels
+  g.append('text').attr('x', w / 2).attr('y', h + 32)
+    .attr('text-anchor', 'middle').attr('fill', '#c8ffe0')
+    .attr('font-size', 10).attr('font-weight', 500)
+    .text(FIELD_LABELS[scatterX] || scatterX);
+  g.append('text').attr('x', -h / 2).attr('y', -38)
+    .attr('transform', 'rotate(-90)').attr('text-anchor', 'middle')
+    .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 500)
+    .text(FIELD_LABELS[scatterY] || scatterY);
+
+  // Dots
+  var dots = g.selectAll('circle').data(data).join('circle')
+    .attr('cx', function(d) { return xScale(xVal(d)); })
+    .attr('cy', function(d) { return yScale(yVal(d)); })
+    .attr('r', 3)
+    .attr('fill', function(d) { return severityColor(d.composite); })
+    .attr('opacity', 0.6)
+    .attr('stroke', 'none')
+    .attr('cursor', 'pointer');
+
+  // Click for drill-down detail
+  dots.on('click', function(event, d) {
+    event.stopPropagation();
+    showDetailPanel(d, event);
+  });
+
+  // 2D Brush
+  var brush = d3.brush().extent([[0, 0], [w, h]])
+    .on('brush end', function(event) {
+      svg.selectAll('.centroid-group').remove();
+      if (!event.selection) {
+        highlightSet = null;
+        highlightECG(null);
+        highlightSankey(null);
+        dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
+        restoreInfoText();
+        return;
+      }
+      var sel = event.selection;
+      var selected = new Set();
+      data.forEach(function(d) {
+        var cx = xScale(xVal(d));
+        var cy = yScale(yVal(d));
+        if (cx >= sel[0][0] && cx <= sel[1][0] && cy >= sel[0][1] && cy <= sel[1][1]) {
+          selected.add(d.id);
+        }
+      });
+      highlightSet = selected;
+
+      dots.attr('opacity', function(d) { return selected.has(d.id) ? 0.9 : 0.06; })
+        .attr('stroke', function(d) { return selected.has(d.id) ? '#fff' : 'none'; })
+        .attr('r', function(d) { return selected.has(d.id) ? 4 : 2; });
+
+      // Centroid markers
+      var selData = data.filter(function(d) { return selected.has(d.id); });
+      if (selData.length > 0) {
+        var cg = svg.append('g').attr('class', 'centroid-group')
+          .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+        var allCx = xScale(d3.mean(data, xVal));
+        var allCy = yScale(d3.mean(data, yVal));
+        var selCx = xScale(d3.mean(selData, xVal));
+        var selCy = yScale(d3.mean(selData, yVal));
+
+        cg.append('line')
+          .attr('x1', allCx).attr('y1', allCy).attr('x2', selCx).attr('y2', selCy)
+          .attr('stroke', '#fff').attr('stroke-width', 1)
+          .attr('stroke-dasharray', '4,3').attr('opacity', 0.4);
+        cg.append('text').attr('x', allCx).attr('y', allCy)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+          .attr('font-size', 14).attr('fill', '#5a8a6e').text('\u25C7');
+        cg.append('text').attr('x', selCx).attr('y', selCy)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+          .attr('font-size', 16).attr('fill', '#00ff78')
+          .style('filter', 'drop-shadow(0 0 4px rgba(0,255,120,0.5))').text('\u25C6');
+        cg.append('text').attr('x', allCx + 10).attr('y', allCy - 8)
+          .attr('font-size', 9).attr('fill', '#5a8a6e')
+          .attr('font-family', "'IBM Plex Mono', monospace").text('baseline');
+        cg.append('text').attr('x', selCx + 10).attr('y', selCy - 8)
+          .attr('font-size', 9).attr('fill', '#00ff78')
+          .attr('font-family', "'IBM Plex Mono', monospace").text('selected (' + selData.length + ')');
+      }
+
+      document.getElementById('brush-info').innerHTML =
+        'Explorer: <span>' + selected.size + '</span> incidents selected';
+      highlightECG(selected);
+      highlightSankey(selected);
+    });
+
+  g.append('g').call(brush);
+  window.v3Dots = dots;
+}
+
+function renderGrouped(data) {
+  var container = document.querySelector('.scatter-panel');
+  var fullWidth = container.clientWidth;
+  var fullHeight = 380;
+  var margin = { top: 10, right: 16, bottom: 54, left: 50 };
+  var w = fullWidth - margin.left - margin.right;
+  var h = fullHeight - margin.top - margin.bottom;
+
+  var svg = d3.select('#scatter-svg').attr('width', fullWidth).attr('height', fullHeight);
+  svg.selectAll('*').remove();
+  var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+  if (data.length === 0) {
+    g.append('text').attr('x', w / 2).attr('y', h / 2)
+      .attr('text-anchor', 'middle').attr('fill', '#5a8a6e').text('No incidents in selection');
+    return;
+  }
+
+  groupByField = document.getElementById('group-by').value;
+  var yVal = function(d) { return d[scatterY]; };
+  var categories = Array.from(new Set(data.map(function(d) { return d[groupByField]; }))).sort();
+
+  var xScale = d3.scaleBand().domain(categories).range([0, w]).padding(0.15);
+  var yScale = d3.scaleLinear()
+    .domain([d3.min(data, yVal) * 0.95, d3.max(data, yVal) * 1.05]).nice().range([h, 0]);
+
+  // Y axis grid
+  g.append('g').call(d3.axisLeft(yScale).ticks(6).tickSize(-w))
+    .selectAll('line').attr('stroke', 'rgba(0,255,120,0.05)');
+  g.selectAll('.domain').attr('stroke', 'rgba(0,255,120,0.1)');
+  g.selectAll('.tick text').attr('fill', '#5a8a6e').attr('font-family', "'IBM Plex Mono', monospace").attr('font-size', 9);
+
+  // Column labels and backgrounds
+  categories.forEach(function(cat) {
+    var cx = xScale(cat) + xScale.bandwidth() / 2;
+
+    g.append('rect')
+      .attr('x', xScale(cat)).attr('y', 0)
+      .attr('width', xScale.bandwidth()).attr('height', h)
+      .attr('fill', 'rgba(0,255,120,0.02)')
+      .attr('stroke', 'rgba(0,255,120,0.05)');
+
+    g.append('text').attr('x', cx).attr('y', h + 14)
+      .attr('text-anchor', 'middle').attr('fill', '#c8ffe0')
+      .attr('font-size', 9).attr('font-weight', 500)
+      .attr('font-family', "'IBM Plex Mono', monospace").text(cat);
+
+    var count = data.filter(function(d) { return d[groupByField] === cat; }).length;
+    g.append('text').attr('x', cx).attr('y', h + 26)
+      .attr('text-anchor', 'middle').attr('fill', '#2d4a3a')
+      .attr('font-size', 8).attr('font-family', "'IBM Plex Mono', monospace")
+      .text('n=' + count);
+
+    // Median line
+    var catData = data.filter(function(d) { return d[groupByField] === cat; });
+    if (catData.length > 0) {
+      var median = d3.median(catData, yVal);
+      g.append('line')
+        .attr('x1', xScale(cat) + 4).attr('x2', xScale(cat) + xScale.bandwidth() - 4)
+        .attr('y1', yScale(median)).attr('y2', yScale(median))
+        .attr('stroke', '#fff').attr('stroke-width', 1.5).attr('opacity', 0.6);
+      g.append('text')
+        .attr('x', xScale(cat) + xScale.bandwidth() - 2).attr('y', yScale(median) - 4)
+        .attr('text-anchor', 'end').attr('font-size', 8).attr('fill', '#c8ffe0')
+        .attr('font-family', "'IBM Plex Mono', monospace").text(median.toFixed(0));
+    }
+  });
+
+  // Axis labels
+  g.append('text').attr('x', w / 2).attr('y', h + 44)
+    .attr('text-anchor', 'middle').attr('fill', '#c8ffe0')
+    .attr('font-size', 10).attr('font-weight', 500)
+    .text(FIELD_LABELS[groupByField] || groupByField);
+  g.append('text').attr('x', -h / 2).attr('y', -38)
+    .attr('transform', 'rotate(-90)').attr('text-anchor', 'middle')
+    .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 500)
+    .text(FIELD_LABELS[scatterY] || scatterY);
+
+  // Jittered dots
+  seedRandom(42);
+  var dots = g.selectAll('circle').data(data).join('circle')
+    .attr('cx', function(d) {
+      return xScale(d[groupByField]) + xScale.bandwidth() * 0.15 + seededRandom() * xScale.bandwidth() * 0.7;
+    })
+    .attr('cy', function(d) { return yScale(yVal(d)); })
+    .attr('r', 3)
+    .attr('fill', function(d) { return severityColor(d.composite); })
+    .attr('opacity', 0.6)
+    .attr('stroke', 'none')
+    .attr('cursor', 'pointer');
+
+  // Click for drill-down
+  dots.on('click', function(event, d) {
+    event.stopPropagation();
+    showDetailPanel(d, event);
+  });
+
+  // Brush
+  var brush = d3.brush().extent([[0, 0], [w, h]])
+    .on('brush end', function(event) {
+      if (!event.selection) {
+        highlightSet = null;
+        highlightECG(null);
+        highlightSankey(null);
+        dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
+        restoreInfoText();
+        return;
+      }
+      var sel = event.selection;
+      var selected = new Set();
+      dots.each(function(d) {
+        var cx = +d3.select(this).attr('cx');
+        var cy = +d3.select(this).attr('cy');
+        if (cx >= sel[0][0] && cx <= sel[1][0] && cy >= sel[0][1] && cy <= sel[1][1]) {
+          selected.add(d.id);
+        }
+      });
+      highlightSet = selected;
+
+      dots.attr('opacity', function(d) { return selected.has(d.id) ? 0.9 : 0.06; })
+        .attr('stroke', function(d) { return selected.has(d.id) ? '#fff' : 'none'; })
+        .attr('r', function(d) { return selected.has(d.id) ? 4 : 2; });
+
+      document.getElementById('brush-info').innerHTML =
+        'Explorer: <span>' + selected.size + '</span> incidents selected';
+      highlightECG(selected);
+      highlightSankey(selected);
+    });
+
+  g.append('g').call(brush);
+  window.v3Dots = dots;
+}
+
+function highlightV3(ids) {
+  var dots = window.v3Dots;
+  if (!dots) return;
+  d3.select('#scatter-svg').selectAll('.centroid-group').remove();
+  if (!ids || ids.size === 0) {
+    dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
+    return;
+  }
+  dots.attr('opacity', function(d) { return ids.has(d.id) ? 0.9 : 0.06; })
+    .attr('stroke', function(d) { return ids.has(d.id) ? '#fff' : 'none'; })
+    .attr('r', function(d) { return ids.has(d.id) ? 4 : 2; });
+}
+
+// ============================================================
+// EXPLANATION PAGE (opens in new tab)
+// ============================================================
+function openExplanation() {
+  window.open('explanation.html', '_blank');
+}
+
+// ============================================================
+// CONTROLS
+// ============================================================
+document.querySelectorAll('.org-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.org-btn').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    currentOrg = this.dataset.org;
+    orgFiltered = currentOrg === 'All' ? rawData : rawData.filter(function(d) { return d.org_type === currentOrg; });
+    computeNormBounds(orgFiltered);
+    monthFiltered = orgFiltered;
+    sankeyFiltered = orgFiltered;
+    brushedMonths = null;
+    highlightSet = null;
+    selectedSankeyNodes = {};
+    clearStageHighlights();
+    renderECG(orgFiltered);
+    renderSankey(monthFiltered);
+    renderView3(sankeyFiltered);
+    restoreInfoText();
+  });
+});
+
+document.getElementById('x-axis').addEventListener('change', function() {
+  scatterX = this.value;
+  renderView3(sankeyFiltered);
+});
+
+document.getElementById('y-axis').addEventListener('change', function() {
+  scatterY = this.value;
+  renderView3(sankeyFiltered);
+});
+
+document.getElementById('group-by').addEventListener('change', function() {
+  groupByField = this.value;
+  renderView3(sankeyFiltered);
+});
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+d3.csv('Healthcare_Ransomware_Dataset.csv').then(function(data) {
+  rawData = data.map(function(d) {
+    return {
+      id: d.id,
+      month: new Date(d.attack_date).getMonth(),
+      org_type: d.org_type,
+      org_size: d.org_size,
+      facilities_affected: +d.facilities_affected,
+      cyber_threats_tracked: d.cyber_threats_tracked,
+      monitoring_freq: d.monitoring_freq,
+      backup_compromised: d.backup_compromised === 'True',
+      infection_rate: +d['ransomware_infection_rate_(%)'],
+      data_encrypted: d.data_encrypted === 'True',
+      data_stolen: d.data_stolen === 'True',
+      recovery_time: +d['recovery_time_(days)'],
+      entry_method: d.entry_method,
+      paid_ransom: d.paid_ransom === 'True',
+      data_restored: +d.data_restored,
+      incidents: +d.ransomware_incidents,
+      composite: 0
+    };
+  });
+
+  rawData.forEach(function(d) { d.composite = computeComposite(d); });
+
+  orgFiltered = rawData;
+  monthFiltered = rawData;
+  sankeyFiltered = rawData;
+  computeNormBounds(orgFiltered);
+
+  renderECG(orgFiltered);
+  renderSankey(monthFiltered);
+  renderView3(sankeyFiltered);
+});
+
+window.addEventListener('resize', function() {
+  renderECG(hasSankeySelection() ? sankeyFiltered : orgFiltered);
+  renderSankey(monthFiltered);
+  renderView3(sankeyFiltered);
+});
+</script>
+</body>
+</html>

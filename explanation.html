@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>How to Read This Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { background: #0a0e0d; color: #c8ffe0; font-family: 'IBM Plex Mono', monospace; padding: 40px 60px; max-width: 1000px; margin: 0 auto; font-size: 14px; line-height: 1.8; }
+  h1 { color: #00ff78; font-size: 18px; letter-spacing: 3px; margin-bottom: 24px; }
+  h2 { color: #5a8a6e; font-size: 14px; letter-spacing: 2px; margin-top: 28px; margin-bottom: 8px; }
+  .cs { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+  .tip { color: #5a8a6e; font-size: 12px; margin-top: 16px; }
+  .back-btn { display: inline-block; background: #111916; border: 1px solid #00ff78; color: #00ff78; padding: 6px 16px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; cursor: pointer; letter-spacing: 1px; text-decoration: none; margin-bottom: 20px; }
+  .back-btn:hover { background: rgba(0,255,120,0.08); }
+  .legend-row { display: flex; gap: 16px; margin: 16px 0 24px; }
+  .legend-card { flex: 1; background: #0d1210; border: 1px solid rgba(0,255,120,0.1); padding: 14px 16px; }
+  .legend-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .legend-card .sev-range { font-size: 10px; letter-spacing: 1px; margin-bottom: 10px; }
+  .legend-card canvas { display: block; width: 100%; height: 60px; margin-bottom: 8px; }
+  .legend-card .desc { font-size: 11px; color: #c8ffe0; margin-bottom: 4px; }
+  .legend-card .meaning { font-size: 11px; color: #5a8a6e; font-style: italic; }
+  .normal h3 { color: #00ff78; } .normal .sev-range { color: #2d6a3a; }
+  .arr h3 { color: #ffcc00; } .arr .sev-range { color: #8a7a2a; }
+  .arrest h3 { color: #ff2244; } .arrest .sev-range { color: #8a3030; }
+</style>
+</head>
+<body>
+<a class="back-btn" href="index.html">Back to Dashboard</a>
+<h1>HOW TO READ THIS DASHBOARD</h1>
+<h2>ECG WAVEFORM LEGEND</h2>
+<p>The waveform shape encodes the cybersecurity health of each month:</p>
+<div class="legend-row">
+  <div class="legend-card normal">
+    <h3>Normal Sinus Rhythm</h3>
+    <div class="sev-range">SEVERITY 0-40</div>
+    <canvas id="c1" height="60"></canvas>
+    <div class="desc">Strong, regular peaks. Clear P-QRS-T pattern.</div>
+    <div class="meaning">= Low infection rates, fast recovery, backups intact. The sector is healthy.</div>
+  </div>
+  <div class="legend-card arr">
+    <h3>Arrhythmia</h3>
+    <div class="sev-range">SEVERITY 40-65</div>
+    <canvas id="c2" height="60"></canvas>
+    <div class="desc">Irregular rhythm, unstable baseline, variable peaks.</div>
+    <div class="meaning">= Rising infections, slower recovery, some backups compromised. The sector is under stress.</div>
+  </div>
+  <div class="legend-card arrest">
+    <h3>Cardiac Arrest</h3>
+    <div class="sev-range">SEVERITY 65-100</div>
+    <canvas id="c3" height="60"></canvas>
+    <div class="desc">Chaotic fibrillation degrading to flatline.</div>
+    <div class="meaning">= Severe infections, weeks of downtime, data unrecoverable. The data has flatlined.</div>
+  </div>
+</div>
+<h2>ATTACK PATHOLOGY (SANKEY DIAGRAM)</h2>
+<p>Shows how incidents flow from entry vector through encryption, data theft, backup loss, ransom payment, and recovery outcome.</p>
+<p><span class="cs" style="background:#c44040"></span> <strong>Red nodes</strong> = bad outcome occurred (encrypted, stolen, backups lost, ransom paid)</p>
+<p><span class="cs" style="background:#3a9a5a"></span> <strong>Green nodes</strong> = bad outcome avoided</p>
+<p>Click nodes to build a path filter. Select multiple per column. Percentages update to reflect the filtered subset.</p>
+<h2>INCIDENT EXPLORER</h2>
+<p><strong>Scatter mode:</strong> Each dot is one incident. Choose X and Y axes. Brush to select dots.</p>
+<p><strong>Grouped mode:</strong> Dots rearrange into categorical columns. White lines show the median. Reveals which defensive postures lead to better outcomes.</p>
+<p>Click any dot to see the full incident record.</p>
+<h2>INTERACTIONS</h2>
+<p>All three views are bidirectionally linked. Brushing months filters the Sankey and Explorer. Clicking Sankey nodes recomputes the ECG and filters the Explorer. Selecting dots highlights corresponding months and pathways.</p>
+<p class="tip">The organization type filter (top right) filters all three views simultaneously.</p>
+<script>
+var sd=1;function sR(){sd=(sd*16807)%2147483647;return(sd-1)/2147483646;}
+function drawW(id,sev,col){
+  var cv=document.getElementById(id);var ctx=cv.getContext('2d');
+  var w=cv.width=cv.offsetWidth*2;var h=cv.height=120;
+  ctx.clearRect(0,0,w,h);sd=Math.round(sev*1000)+1;
+  var n=200,pts=[];
+  if(sev<0.35){for(var i=0;i<n;i++){var t=i/n,y=0;y+=0.12*Math.exp(-Math.pow((t-0.12)/0.03,2));y-=0.08*Math.exp(-Math.pow((t-0.22)/0.012,2));y+=(0.8+sev*0.4)*Math.exp(-Math.pow((t-0.26)/0.015,2));y-=0.15*Math.exp(-Math.pow((t-0.30)/0.015,2));y+=0.18*Math.exp(-Math.pow((t-0.45)/0.04,2));y+=(sR()-0.5)*0.012;pts.push(y);}}
+  else if(sev<0.7){var ir=(sev-0.35)/0.35;for(var i=0;i<n;i++){var t=i/n,y=0;y+=0.06*Math.sin(t*Math.PI*6)*ir;y+=0.12*(1-ir*0.7)*Math.exp(-Math.pow((t-0.10+ir*0.03)/0.03,2));y-=0.06*Math.exp(-Math.pow((t-0.21)/0.012,2));y+=(0.7+sR()*0.5*ir)*Math.exp(-Math.pow((t-0.26)/(0.015+ir*0.012),2));y-=(0.12+ir*0.12)*Math.exp(-Math.pow((t-0.31)/0.015,2));y+=(ir>0.5?-1:1)*0.15*Math.exp(-Math.pow((t-0.48)/0.04,2));y+=(sR()-0.5)*0.03*(1+ir);pts.push(y);}}
+  else{var a=(sev-0.7)/0.3;for(var i=0;i<n;i++){var t=i/n,y=0;if(a<0.5){var c=a/0.5;y+=0.45*(1-c)*Math.sin(t*Math.PI*(8+sR()*14));y+=0.3*Math.sin(t*Math.PI*(14+sR()*8))*(1-c*0.5);y+=(sR()-0.5)*0.35;y*=(1-c*0.6);}else{y=(sR()-0.5)*0.02;}pts.push(y);}}
+  ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.shadowColor=col;ctx.shadowBlur=6;ctx.beginPath();
+  for(var i=0;i<pts.length;i++){var px=(i/pts.length)*w,py=h/2-pts[i]*h*0.7;if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.stroke();
+}
+window.addEventListener('load',function(){drawW('c1',0.15,'#00ff78');drawW('c2',0.52,'#ffcc00');drawW('c3',0.85,'#ff2244');});
+</script>
+</body>
+</html>

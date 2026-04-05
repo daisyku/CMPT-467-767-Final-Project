@@ -34,10 +34,11 @@
   }
 
   .top-bar h1 {
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 3px;
-    color: #5a8a6e;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    color: #00ff78;
+    text-shadow: 0 0 12px rgba(0,255,120,0.3);
   }
 
   .top-bar-right {
@@ -82,15 +83,16 @@
   }
 
   .view-label {
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 2px;
-    color: #5a8a6e;
-    padding: 6px 12px;
-    border-bottom: 1px solid rgba(0,255,120,0.06);
-    font-weight: 500;
+    color: #00ff78;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(0,255,120,0.1);
+    font-weight: 600;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    text-shadow: 0 0 8px rgba(0,255,120,0.2);
   }
 
   .ecg-panel { margin-bottom: 10px; }
@@ -310,7 +312,7 @@
         <span>Attack Pathology (click nodes to filter, multi-select per column)</span>
         <button class="reset-btn" onclick="resetSankeySelection()">Reset</button>
       </div>
-      <div class="sankey-stages" id="sankey-stages">
+      <div class="sankey-stages" id="sankey-stages" style="display:none;">
         <span data-stage="entry">Entry Vector</span>
         <span data-stage="encrypted">Encryption</span>
         <span data-stage="stolen">Data Stolen</span>
@@ -519,15 +521,19 @@ function updateSankeyInfo() {
 }
 
 function clearStageHighlights() {
-  document.querySelectorAll('.sankey-stages span').forEach(function(el) {
-    el.classList.remove('highlighted');
-  });
+  d3.selectAll('.stage-title').attr('fill', '#5a8a6e');
+  d3.selectAll('.stage-title-bg').attr('opacity', 0);
 }
 
 function highlightStage(stageName) {
-  document.querySelectorAll('.sankey-stages span').forEach(function(el) {
-    if (el.dataset.stage === stageName) {
-      el.classList.add('highlighted');
+  d3.selectAll('.stage-title').each(function() {
+    if (d3.select(this).attr('data-stage') === stageName) {
+      d3.select(this).attr('fill', '#00ff78');
+    }
+  });
+  d3.selectAll('.stage-title-bg').each(function() {
+    if (d3.select(this).attr('data-stage') === stageName) {
+      d3.select(this).attr('opacity', 1);
     }
   });
 }
@@ -776,6 +782,58 @@ function renderECG(data) {
 
   // Draw traces
   for (var m = 0; m < 12; m++) {
+    var hasData = monthly[m].count > 0;
+
+    if (!hasData) {
+      // No data for this month: show dashed baseline with NO DATA label
+      var mCenter = xScale(m + 0.5);
+      var mLeft = xScale(m) + 4;
+      var mRight = xScale(m + 1) - 4;
+      var baselineY = yScale(0);
+
+      g.append('line')
+        .attr('x1', mLeft).attr('y1', baselineY)
+        .attr('x2', mRight).attr('y2', baselineY)
+        .attr('stroke', '#2d4a3a')
+        .attr('stroke-width', 1)
+        .attr('stroke-dasharray', '4,4');
+
+      g.append('text')
+        .attr('x', mCenter).attr('y', baselineY - 8)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 7).attr('fill', '#2d4a3a')
+        .attr('font-family', "'IBM Plex Mono', monospace")
+        .attr('letter-spacing', '1px')
+        .text('NO DATA');
+
+      // Severity label shows --
+      g.append('text')
+        .attr('x', mCenter).attr('y', -6)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 10).attr('font-weight', 500)
+        .attr('fill', '#2d4a3a')
+        .attr('font-family', "'IBM Plex Mono', monospace")
+        .text('--');
+
+      // Month label
+      g.append('text')
+        .attr('x', mCenter).attr('y', height + 14)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 10).attr('font-weight', 500)
+        .attr('fill', '#2d4a3a')
+        .attr('font-family', "'IBM Plex Mono', monospace")
+        .text(MONTHS[m]);
+
+      g.append('text')
+        .attr('x', mCenter).attr('y', height + 24)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 8).attr('fill', '#2d4a3a')
+        .attr('font-family', "'IBM Plex Mono', monospace")
+        .text('n=0');
+
+      continue;
+    }
+
     var monthPoints = allPoints.filter(function(p) { return p.month === m; });
     if (monthPoints.length < 2) continue;
 
@@ -826,9 +884,9 @@ function renderECG(data) {
       .attr('x', xScale(m + 0.5)).attr('y', height + 24)
       .attr('text-anchor', 'middle')
       .attr('font-size', 8)
-      .attr('fill', monthly[m].count > 0 ? '#5a8a6e' : '#2d4a3a')
+      .attr('fill', '#5a8a6e')
       .attr('font-family', "'IBM Plex Mono', monospace")
-      .text(monthly[m].count === 0 ? 'n=0' : 'n=' + monthly[m].count);
+      .text('n=' + monthly[m].count);
   }
 
   // Incidents axis label
@@ -983,8 +1041,8 @@ function renderSankey(data) {
 
   var container = document.querySelector('.sankey-panel');
   var fullWidth = container.clientWidth;
-  var fullHeight = 380;
-  var margin = { top: 4, right: 90, bottom: 4, left: 180 };
+  var fullHeight = 460;
+  var margin = { top: 24, right: 90, bottom: 4, left: 180 };
   var w = fullWidth - margin.left - margin.right;
   var h = fullHeight - margin.top - margin.bottom;
 
@@ -1035,36 +1093,71 @@ function renderSankey(data) {
     .attr('stroke', 'none')
     .attr('stroke-width', 0);
 
-  // Add background rects behind labels for readability
-  nodeGroups.each(function(d) {
-    var group = d3.select(this);
-    var isEntry = nodeStages[d.name] === 'entry';
-    var labelText = displayName(d.name);
-    var nodeW = d.x1 - d.x0;
-    var nodeH = d.y1 - d.y0;
+  // Node labels with text stroke for readability
+  nodeGroups.append('text')
+    .attr('class', 'sankey-label')
+    .attr('x', function(d) {
+      return nodeStages[d.name] === 'entry' ? -6 : (d.x1 - d.x0) + 6;
+    })
+    .attr('y', function(d) { return (d.y1 - d.y0) / 2; })
+    .attr('dy', '0.35em')
+    .attr('text-anchor', function(d) {
+      return nodeStages[d.name] === 'entry' ? 'end' : 'start';
+    })
+    .attr('font-size', 11)
+    .attr('font-weight', 600)
+    .attr('fill', '#c8ffe0')
+    .attr('stroke', '#0a0e0d')
+    .attr('stroke-width', 3)
+    .attr('paint-order', 'stroke')
+    .text(function(d) { return displayName(d.name); });
 
-    // Background rect
-    var textW = labelText.length * 7 + 8;
-    var bgX = isEntry ? -textW - 2 : nodeW + 2;
-    group.append('rect')
-      .attr('x', bgX)
-      .attr('y', nodeH / 2 - 8)
-      .attr('width', textW)
-      .attr('height', 16)
-      .attr('fill', '#0d1210')
-      .attr('opacity', 0.85)
-      .attr('rx', 2);
+  // Render stage titles in SVG centered on each column
+  var stageNames = {
+    entry: 'Entry Vector', encrypted: 'Encryption', stolen: 'Data Stolen',
+    backup: 'Backup Lost', ransom: 'Paid Ransom', recovery: 'Recovery'
+  };
+  var stagePositions = {};
+  graph.nodes.forEach(function(nd) {
+    var stage = nodeStages[nd.name];
+    if (!stagePositions[stage]) stagePositions[stage] = [];
+    stagePositions[stage].push((nd.x0 + nd.x1) / 2);
+  });
 
-    // Label text
-    group.append('text')
-      .attr('class', 'sankey-label')
-      .attr('x', isEntry ? -4 : nodeW + 4)
-      .attr('y', nodeH / 2)
-      .attr('dy', '0.35em')
-      .attr('text-anchor', isEntry ? 'end' : 'start')
+  var stageTitleGroup = g.append('g').attr('class', 'stage-titles');
+  Object.entries(stagePositions).forEach(function(pair) {
+    var stage = pair[0];
+    var positions = pair[1];
+    var avgX = d3.mean(positions);
+    var label = stageNames[stage] || stage;
+    var labelW = label.length * 7.5 + 12;
+
+    // Background rect (hidden by default, shown on highlight)
+    stageTitleGroup.append('rect')
+      .attr('class', 'stage-title-bg')
+      .attr('data-stage', stage)
+      .attr('x', avgX - labelW / 2)
+      .attr('y', -20)
+      .attr('width', labelW)
+      .attr('height', 18)
+      .attr('rx', 3)
+      .attr('fill', 'rgba(0,255,120,0.08)')
+      .attr('stroke', 'rgba(0,255,120,0.25)')
+      .attr('stroke-width', 1)
+      .attr('opacity', 0);
+
+    stageTitleGroup.append('text')
+      .attr('class', 'stage-title')
+      .attr('data-stage', stage)
+      .attr('x', avgX)
+      .attr('y', -8)
+      .attr('text-anchor', 'middle')
       .attr('font-size', 11)
-      .attr('font-weight', 500)
-      .text(labelText);
+      .attr('font-weight', 600)
+      .attr('fill', '#5a8a6e')
+      .attr('letter-spacing', '1px')
+      .attr('font-family', "'IBM Plex Mono', monospace")
+      .text(label);
   });
 
   // Apply white borders if there are active selections

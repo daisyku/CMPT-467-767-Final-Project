@@ -10,8 +10,8 @@ I'm assuming you've cloned the repo and are in the project directory
 - Run command in project directory: python3 -m http.server 8000
 - Paste into browser: http://localhost:8000
 
-3. Node.JS installed:
-= Past command: npx serve
+3. Node.JS installed
+= Paste command: npx serve
 - Terminal will output clickable URLs, enjoy
 
 If you can't do any of these idk how to help bruh im tired

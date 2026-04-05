@@ -114,11 +114,14 @@
   .sankey-stages span {
     text-align: center;
     flex: 1;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
+    padding: 2px 4px;
   }
 
   .sankey-stages span.highlighted {
     color: #00ff78;
+    background: rgba(0,255,120,0.08);
+    outline: 1px solid rgba(0,255,120,0.2);
   }
 
   .view-controls {
@@ -182,6 +185,23 @@
     fill: #c8ffe0;
     pointer-events: none;
   }
+
+  .sankey-tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: rgba(13,18,16,0.95);
+    border: 1px solid rgba(0,255,120,0.3);
+    padding: 6px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #c8ffe0;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.1s;
+    white-space: nowrap;
+  }
+
+  .sankey-tooltip.visible { opacity: 1; }
 
   .severity-bar {
     display: flex;
@@ -267,6 +287,7 @@
         <button class="org-btn" data-org="Pharma">Pharma</button>
         <button class="org-btn" data-org="Research Lab">Lab</button>
         <button class="org-btn" data-org="Insurance">Insurance</button>
+        <button class="reset-btn" onclick="resetOrgFilter()">Reset</button>
       </div>
       <button class="help-btn" onclick="openExplanation()">? How to Read</button>
     </div>
@@ -298,7 +319,10 @@
         <span data-stage="recovery">Recovery</span>
       </div>
       <svg id="sankey-svg"></svg>
+      <div class="brush-info" id="sankey-info" style="min-height:18px;"></div>
     </div>
+
+    <div class="sankey-tooltip" id="sankey-tooltip"></div>
 
     <div class="view-panel scatter-panel" style="position:relative;">
       <div class="view-label"><span>Incident Explorer (brush to select, click dot for details)</span></div>
@@ -343,8 +367,40 @@ var orgFiltered = [];
 var monthFiltered = [];
 var sankeyFiltered = [];
 var highlightSet = null;
-var currentOrg = 'All';
+var selectedOrgs = new Set();
+
+function getOrgLabel() {
+  if (selectedOrgs.size === 0) return 'All Organizations';
+  if (selectedOrgs.size === 1) return Array.from(selectedOrgs)[0] + 's';
+  return selectedOrgs.size + ' Org Types';
+}
+
+function applyOrgFilter() {
+  if (selectedOrgs.size === 0) {
+    orgFiltered = rawData;
+  } else {
+    orgFiltered = rawData.filter(function(d) { return selectedOrgs.has(d.org_type); });
+  }
+  computeNormBounds(orgFiltered);
+  monthFiltered = brushedMonths
+    ? orgFiltered.filter(function(d) { return d.month >= brushedMonths[0] && d.month <= brushedMonths[1]; })
+    : orgFiltered;
+  sankeyFiltered = hasSankeySelection() ? filterBySankeyNodes(monthFiltered) : monthFiltered;
+  highlightSet = null;
+  renderECG(hasSankeySelection() ? sankeyFiltered : orgFiltered);
+  renderSankey(monthFiltered);
+  renderView3(sankeyFiltered);
+  restoreInfoText();
+}
+
+function resetOrgFilter() {
+  selectedOrgs = new Set();
+  document.querySelectorAll('.org-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.org-btn[data-org="All"]').classList.add('active');
+  applyOrgFilter();
+}
 var brushedMonths = null;
+var savedBrushExtent = null; // pixel extent to re-apply after re-render
 var selectedSankeyNodes = {};
 var sankeyLinkIncidents = {};
 var sankeyNodeIncidents = {};
@@ -442,16 +498,23 @@ function resetSankeySelection() {
 }
 
 function restoreInfoText() {
-  var labels = getSankeyLabels();
-  if (labels.length > 0) {
-    document.getElementById('brush-info').innerHTML =
-      'Path filter: <span>' + labels.join(' + ') + '</span> (<span>' + sankeyFiltered.length + '</span> incidents)';
-  } else if (brushedMonths) {
+  if (brushedMonths) {
     document.getElementById('brush-info').innerHTML =
       'Selected: <span>' + MONTHS[brushedMonths[0]] + '</span> to <span>' + MONTHS[brushedMonths[1]] + '</span> (<span>' + monthFiltered.length.toLocaleString() + '</span> incidents)';
   } else {
     document.getElementById('brush-info').innerHTML =
-      'Brush months to filter views below. Click Sankey nodes to build a path filter.';
+      'Brush months to filter views below.';
+  }
+  updateSankeyInfo();
+}
+
+function updateSankeyInfo() {
+  var labels = getSankeyLabels();
+  if (labels.length > 0) {
+    document.getElementById('sankey-info').innerHTML =
+      'Path filter: <span>' + labels.join(' + ') + '</span> (<span>' + sankeyFiltered.length + '</span> incidents)';
+  } else {
+    document.getElementById('sankey-info').innerHTML = '';
   }
 }
 
@@ -493,14 +556,14 @@ var sankeyNodeColors = {
   'RDP Exploit': '#5a8a9a',
   'Malicious Website': '#5a8a9a',
   'Infected Removable Media': '#5a8a9a',
-  'Encrypted: Yes': '#c44040',
-  'Encrypted: No': '#3a9a5a',
-  'Data Stolen: Yes': '#c44040',
-  'Data Stolen: No': '#3a9a5a',
-  'Backup Lost: Yes': '#c44040',
-  'Backup Lost: No': '#3a9a5a',
-  'Paid Ransom: Yes': '#c44040',
-  'Paid Ransom: No': '#3a9a5a',
+  'Encrypted: Yes': '#3a9a5a',
+  'Encrypted: No': '#c44040',
+  'Data Stolen: Yes': '#3a9a5a',
+  'Data Stolen: No': '#c44040',
+  'Backup Lost: Yes': '#3a9a5a',
+  'Backup Lost: No': '#c44040',
+  'Paid Ransom: Yes': '#3a9a5a',
+  'Paid Ransom: No': '#c44040',
   '< 25%': '#c03030',
   '25-50%': '#c08030',
   '50-75%': '#6a9a4a',
@@ -509,6 +572,22 @@ var sankeyNodeColors = {
 
 function getSankeyColor(name) {
   return sankeyNodeColors[name] || '#5a8a6e';
+}
+
+// Brighter neon versions for selected flows
+var neonSankeyColors = {
+  'Compromised Credentials': '#7ac8e0', 'Exploited Vulnerability': '#7ac8e0',
+  'Phishing Email': '#7ac8e0', 'RDP Exploit': '#7ac8e0',
+  'Malicious Website': '#7ac8e0', 'Infected Removable Media': '#7ac8e0',
+  'Encrypted: Yes': '#50ff80', 'Encrypted: No': '#ff5555',
+  'Data Stolen: Yes': '#50ff80', 'Data Stolen: No': '#ff5555',
+  'Backup Lost: Yes': '#50ff80', 'Backup Lost: No': '#ff5555',
+  'Paid Ransom: Yes': '#50ff80', 'Paid Ransom: No': '#ff5555',
+  '< 25%': '#ff4040', '25-50%': '#ffaa40', '50-75%': '#80dd60', '75-100%': '#40ff70'
+};
+
+function getNeonColor(name) {
+  return neonSankeyColors[name] || '#7ac8e0';
 }
 
 function displayName(name) {
@@ -742,16 +821,22 @@ function renderECG(data) {
       .attr('font-family', "'IBM Plex Mono', monospace")
       .text(MONTHS[m]);
 
-    // Incident count below month
-    if (monthly[m].count > 0) {
-      g.append('text')
-        .attr('x', xScale(m + 0.5)).attr('y', height + 24)
-        .attr('text-anchor', 'middle')
-        .attr('font-size', 8).attr('fill', '#2d4a3a')
-        .attr('font-family', "'IBM Plex Mono', monospace")
-        .text(monthly[m].count);
-    }
+    // Incident count below month (always show, including 0)
+    g.append('text')
+      .attr('x', xScale(m + 0.5)).attr('y', height + 24)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 8)
+      .attr('fill', monthly[m].count > 0 ? '#5a8a6e' : '#2d4a3a')
+      .attr('font-family', "'IBM Plex Mono', monospace")
+      .text(monthly[m].count === 0 ? 'n=0' : 'n=' + monthly[m].count);
   }
+
+  // Incidents axis label
+  g.append('text').attr('x', -4).attr('y', height + 24)
+    .attr('fill', '#2d4a3a').attr('font-size', 7)
+    .attr('font-family', "'IBM Plex Mono', monospace")
+    .attr('text-anchor', 'end')
+    .text('INCIDENTS');
 
   // Brush interaction
   var brush = d3.brushX()
@@ -759,34 +844,41 @@ function renderECG(data) {
     .on('brush end', function(event) {
       if (!event.selection) {
         brushedMonths = null;
+        savedBrushExtent = null;
         monthFiltered = orgFiltered;
-        selectedSankeyNodes = {};
-        sankeyFiltered = monthFiltered;
+        sankeyFiltered = hasSankeySelection() ? filterBySankeyNodes(monthFiltered) : monthFiltered;
         highlightSet = null;
         highlightGroup.selectAll('*').remove();
-        clearStageHighlights();
-        renderECG(orgFiltered);
+        document.getElementById('brush-info').innerHTML =
+          'Brush months to filter views below.';
         renderSankey(monthFiltered);
         renderView3(sankeyFiltered);
-        restoreInfoText();
+        updateSankeyInfo();
         return;
       }
       var sel = event.selection;
+      savedBrushExtent = sel;
       var m0 = Math.max(0, Math.floor(xScale.invert(sel[0])));
       var m1 = Math.min(11, Math.floor(xScale.invert(sel[1])));
       brushedMonths = [m0, m1];
       monthFiltered = orgFiltered.filter(function(d) { return d.month >= m0 && d.month <= m1; });
-      selectedSankeyNodes = {};
-      sankeyFiltered = monthFiltered;
+      sankeyFiltered = hasSankeySelection() ? filterBySankeyNodes(monthFiltered) : monthFiltered;
       highlightSet = null;
-      clearStageHighlights();
       document.getElementById('brush-info').innerHTML =
         'Selected: <span>' + MONTHS[m0] + '</span> to <span>' + MONTHS[m1] + '</span> (<span>' + monthFiltered.length.toLocaleString() + '</span> incidents)';
       renderSankey(monthFiltered);
       renderView3(sankeyFiltered);
+      updateSankeyInfo();
     });
 
-  g.append('g').attr('class', 'ecg-brush').call(brush);
+  var brushGroup = g.append('g').attr('class', 'ecg-brush').call(brush);
+
+  // Re-apply brush selection if it existed before this re-render
+  if (savedBrushExtent && brushedMonths) {
+    var newX0 = xScale(brushedMonths[0]);
+    var newX1 = xScale(brushedMonths[1] + 1);
+    brushGroup.call(brush.move, [newX0, newX1]);
+  }
 
   // Store refs for cross-view highlighting
   window.ecgHighlightGroup = highlightGroup;
@@ -943,39 +1035,159 @@ function renderSankey(data) {
     .attr('stroke', 'none')
     .attr('stroke-width', 0);
 
-  nodeGroups.append('text')
-    .attr('class', 'sankey-label')
-    .attr('x', function(d) {
-      // Entry vectors: label on LEFT side
-      if (nodeStages[d.name] === 'entry') return -4;
-      return (d.x1 - d.x0) + 4;
-    })
-    .attr('y', function(d) { return (d.y1 - d.y0) / 2; })
-    .attr('dy', '0.35em')
-    .attr('text-anchor', function(d) {
-      return nodeStages[d.name] === 'entry' ? 'end' : 'start';
-    })
-    .attr('font-size', 10)
-    .text(function(d) {
-      var pct = data.length > 0 ? ((d.value / data.length) * 100).toFixed(0) : 0;
-      return displayName(d.name) + ' (' + pct + '%)';
-    });
+  // Add background rects behind labels for readability
+  nodeGroups.each(function(d) {
+    var group = d3.select(this);
+    var isEntry = nodeStages[d.name] === 'entry';
+    var labelText = displayName(d.name);
+    var nodeW = d.x1 - d.x0;
+    var nodeH = d.y1 - d.y0;
 
-  // Hover: highlight stage title
-  nodeGroups.on('mouseenter', function(event, d) {
-    var stage = nodeStages[d.name];
-    highlightStage(stage);
-  }).on('mouseleave', function() {
+    // Background rect
+    var textW = labelText.length * 7 + 8;
+    var bgX = isEntry ? -textW - 2 : nodeW + 2;
+    group.append('rect')
+      .attr('x', bgX)
+      .attr('y', nodeH / 2 - 8)
+      .attr('width', textW)
+      .attr('height', 16)
+      .attr('fill', '#0d1210')
+      .attr('opacity', 0.85)
+      .attr('rx', 2);
+
+    // Label text
+    group.append('text')
+      .attr('class', 'sankey-label')
+      .attr('x', isEntry ? -4 : nodeW + 4)
+      .attr('y', nodeH / 2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', isEntry ? 'end' : 'start')
+      .attr('font-size', 11)
+      .attr('font-weight', 500)
+      .text(labelText);
+  });
+
+  // Apply white borders if there are active selections
+  if (hasSankeySelection()) {
+    nodeGroups.selectAll('rect')
+      .attr('stroke', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        return stageSet && stageSet.has(nd.name) ? '#fff' : 'none';
+      })
+      .attr('stroke-width', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        return stageSet && stageSet.has(nd.name) ? 2 : 0;
+      });
+
+    // Highlight selected stage titles
     clearStageHighlights();
-    // Re-highlight selected stages
     Object.keys(selectedSankeyNodes).forEach(function(stage) {
       if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
         highlightStage(stage);
       }
     });
-  });
 
-  // Click: multi-select per stage
+    // Adjust band widths, opacity, and color for current selection
+    var filteredIds = new Set(sankeyFiltered.map(function(dd) { return dd.id; }));
+    linkPaths
+      .attr('stroke-width', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var overlap = 0;
+        for (var id of linkIds) {
+          if (filteredIds.has(id)) overlap++;
+        }
+        if (overlap === 0) return 1;
+        var ratio = overlap / (link.value || 1);
+        return Math.max(1, link.width * ratio);
+      })
+      .attr('stroke', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var hasMatch = false;
+        for (var id of linkIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? getNeonColor(link.target.name) : getSankeyColor(link.target.name);
+      })
+      .attr('stroke-opacity', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var hasMatch = false;
+        for (var id of linkIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.85 : 0.08;
+      });
+  }
+
+  // Hover: show tooltip with accurate filtered count
+  var tooltip = document.getElementById('sankey-tooltip');
+  var orgLabel = getOrgLabel();
+  var timeLabel = brushedMonths
+    ? MONTHS[brushedMonths[0]] + ' to ' + MONTHS[brushedMonths[1]]
+    : 'Full Year 2024';
+
+  nodeGroups
+    .on('mouseenter', function(event, d) {
+      highlightStage(nodeStages[d.name]);
+
+      var totalBase = monthFiltered.length;
+      var count, contextLabel;
+
+      if (hasSankeySelection()) {
+        // Count how many of the currently filtered incidents match this node
+        count = sankeyFiltered.filter(function(inc) { return matchesNode(inc, d.name); }).length;
+        contextLabel = sankeyFiltered.length + ' filtered';
+
+        // Also check if adding this node would produce 0 results
+        var testNodes = {};
+        Object.entries(selectedSankeyNodes).forEach(function(pair) {
+          testNodes[pair[0]] = new Set(pair[1]);
+        });
+        var stage = nodeStages[d.name];
+        if (!testNodes[stage]) testNodes[stage] = new Set();
+        testNodes[stage].add(d.name);
+        var oldNodes = selectedSankeyNodes;
+        selectedSankeyNodes = testNodes;
+        var testResult = filterBySankeyNodes(monthFiltered);
+        selectedSankeyNodes = oldNodes;
+
+        if (testResult.length === 0) {
+          tooltip.innerHTML = '<strong>' + d.name + '</strong><br>' +
+            '<span style="color:#ff4444;">No incidents match with current selection</span>';
+          tooltip.classList.add('visible');
+          return;
+        }
+      } else {
+        count = d.value || 0;
+        contextLabel = totalBase.toLocaleString() + ' total';
+      }
+
+      var pctOfTotal = totalBase > 0 ? ((count / totalBase) * 100).toFixed(2) : '0.00';
+      tooltip.innerHTML = '<strong>' + d.name + '</strong><br>' +
+        count.toLocaleString() + ' of ' + contextLabel + ' incidents (' + pctOfTotal + '%)<br>' +
+        '<span style="color:#5a8a6e;font-size:9px;">' + orgLabel + ' | ' + timeLabel + '</span>';
+      tooltip.classList.add('visible');
+    })
+    .on('mousemove', function(event) {
+      var tx = event.clientX + 14;
+      var ty = event.clientY - 10;
+      if (tx + 220 > window.innerWidth) tx = event.clientX - 230;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top = ty + 'px';
+    })
+    .on('mouseleave', function() {
+      tooltip.classList.remove('visible');
+      clearStageHighlights();
+      Object.keys(selectedSankeyNodes).forEach(function(stage) {
+        if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
+          highlightStage(stage);
+        }
+      });
+    });
+
+  // Click: multi-select per stage, adjust band widths
   nodeGroups.on('click', function(event, d) {
     var stage = nodeStages[d.name];
 
@@ -997,17 +1209,15 @@ function renderSankey(data) {
     var testFiltered = filterBySankeyNodes(monthFiltered);
 
     if (testFiltered.length === 0) {
-      // Revert the selection
       if (selectedSankeyNodes[stage]) {
         selectedSankeyNodes[stage].delete(d.name);
         if (selectedSankeyNodes[stage].size === 0) {
           delete selectedSankeyNodes[stage];
         }
       }
-      // Flash a message
-      document.getElementById('brush-info').innerHTML =
+      document.getElementById('sankey-info').innerHTML =
         'No incidents match <span>' + d.name + '</span> with current selection';
-      setTimeout(function() { restoreInfoText(); }, 2000);
+      setTimeout(function() { updateSankeyInfo(); }, 2000);
       return;
     }
 
@@ -1019,7 +1229,7 @@ function renderSankey(data) {
     }
 
     var labels = getSankeyLabels();
-    document.getElementById('brush-info').innerHTML =
+    document.getElementById('sankey-info').innerHTML =
       'Path filter: <span>' + labels.join(' + ') + '</span> (<span>' + sankeyFiltered.length + '</span> incidents)';
 
     // White border on selected nodes
@@ -1033,59 +1243,45 @@ function renderSankey(data) {
         return stageSet && stageSet.has(nd.name) ? 2 : 0;
       });
 
-    // Highlight only flows that pass through the FILTERED incidents
+    // Adjust band thickness, opacity, and color based on filtered incidents
     var filteredIds = new Set(sankeyFiltered.map(function(dd) { return dd.id; }));
-    linkPaths.attr('stroke-opacity', function(link) {
-      var key = link.source.name + '|||' + link.target.name;
-      var linkIds = sankeyLinkIncidents[key] || new Set();
-      var overlap = 0;
-      for (var id of linkIds) {
-        if (filteredIds.has(id)) overlap++;
-      }
-      return overlap > 0 ? 0.5 : 0.04;
-    });
+    linkPaths.transition().duration(300)
+      .attr('stroke-width', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var overlap = 0;
+        for (var id of linkIds) {
+          if (filteredIds.has(id)) overlap++;
+        }
+        if (overlap === 0) return 1;
+        var ratio = overlap / (link.value || 1);
+        return Math.max(1, link.width * ratio);
+      })
+      .attr('stroke', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var hasMatch = false;
+        for (var id of linkIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? getNeonColor(link.target.name) : getSankeyColor(link.target.name);
+      })
+      .attr('stroke-opacity', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var hasMatch = false;
+        for (var id of linkIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.85 : 0.08;
+      });
 
     // Highlight stage titles
     clearStageHighlights();
-    Object.keys(selectedSankeyNodes).forEach(function(stage) {
-      if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
-        highlightStage(stage);
+    Object.keys(selectedSankeyNodes).forEach(function(stg) {
+      if (selectedSankeyNodes[stg] && selectedSankeyNodes[stg].size > 0) {
+        highlightStage(stg);
       }
-    });
-
-    // Update percentage labels to reflect filtered subset
-    var filteredTotal = sankeyFiltered.length;
-    nodeGroups.selectAll('.sankey-label').text(function(nd) {
-      var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
-      var matchCount = 0;
-      for (var id of nodeIds) {
-        if (filteredIds.has(id)) matchCount++;
-      }
-      var pct = filteredTotal > 0 ? ((matchCount / filteredTotal) * 100).toFixed(0) : 0;
-      return displayName(nd.name) + ' (' + pct + '%)';
-    });
-
-    // Dim nodes that have zero matching incidents (not clickable)
-    nodeGroups.selectAll('rect').attr('opacity', function(nd) {
-      var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
-      if (stageSet && stageSet.has(nd.name)) return 1;
-      var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
-      var hasMatch = false;
-      for (var id of nodeIds) {
-        if (filteredIds.has(id)) { hasMatch = true; break; }
-      }
-      return hasMatch ? 1 : 0.15;
-    });
-
-    nodeGroups.selectAll('.sankey-label').attr('opacity', function(nd) {
-      var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
-      if (stageSet && stageSet.has(nd.name)) return 1;
-      var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
-      var hasMatch = false;
-      for (var id of nodeIds) {
-        if (filteredIds.has(id)) { hasMatch = true; break; }
-      }
-      return hasMatch ? 1 : 0.3;
     });
 
     // Update other views
@@ -1114,7 +1310,7 @@ function highlightSankey(ids) {
     for (var id of linkIds) {
       if (ids.has(id)) overlap++;
     }
-    return overlap > 0 ? 0.5 : 0.04;
+    return overlap > 0 ? 0.7 : 0.10;
   });
 }
 
@@ -1488,21 +1684,30 @@ function openExplanation() {
 // ============================================================
 document.querySelectorAll('.org-btn').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    document.querySelectorAll('.org-btn').forEach(function(b) { b.classList.remove('active'); });
-    this.classList.add('active');
-    currentOrg = this.dataset.org;
-    orgFiltered = currentOrg === 'All' ? rawData : rawData.filter(function(d) { return d.org_type === currentOrg; });
-    computeNormBounds(orgFiltered);
-    monthFiltered = orgFiltered;
-    sankeyFiltered = orgFiltered;
-    brushedMonths = null;
-    highlightSet = null;
-    selectedSankeyNodes = {};
-    clearStageHighlights();
-    renderECG(orgFiltered);
-    renderSankey(monthFiltered);
-    renderView3(sankeyFiltered);
-    restoreInfoText();
+    var org = this.dataset.org;
+
+    if (org === 'All') {
+      // "All" clears specific selections
+      selectedOrgs = new Set();
+      document.querySelectorAll('.org-btn').forEach(function(b) { b.classList.remove('active'); });
+      this.classList.add('active');
+    } else {
+      // Toggle this org type
+      document.querySelector('.org-btn[data-org="All"]').classList.remove('active');
+      if (selectedOrgs.has(org)) {
+        selectedOrgs.delete(org);
+        this.classList.remove('active');
+        // If nothing selected, revert to All
+        if (selectedOrgs.size === 0) {
+          document.querySelector('.org-btn[data-org="All"]').classList.add('active');
+        }
+      } else {
+        selectedOrgs.add(org);
+        this.classList.add('active');
+      }
+    }
+
+    applyOrgFilter();
   });
 });
 

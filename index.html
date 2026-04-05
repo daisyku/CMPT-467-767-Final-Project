@@ -216,9 +216,10 @@
 
   .severity-gradient {
     flex: 1;
-    height: 4px;
-    background: linear-gradient(to right, #00ff78, #ffcc00 45%, #ff2244);
-    opacity: 0.5;
+    height: 6px;
+    background: linear-gradient(to right, #00ff78 0%, #8ae050 20%, #c8c030 35%, #ffcc00 45%, #ff8833 60%, #ff4433 80%, #ff2244 100%);
+    opacity: 0.7;
+    border-radius: 2px;
   }
 
   .brush-info {
@@ -523,9 +524,11 @@ function updateSankeyInfo() {
 function clearStageHighlights() {
   d3.selectAll('.stage-title').attr('fill', '#5a8a6e');
   d3.selectAll('.stage-title-bg').attr('opacity', 0);
+  d3.selectAll('.col-bg').attr('fill', 'rgba(0,0,0,0)');
 }
 
 function highlightStage(stageName) {
+  // Title text turns green (persists on click selection)
   d3.selectAll('.stage-title').each(function() {
     if (d3.select(this).attr('data-stage') === stageName) {
       d3.select(this).attr('fill', '#00ff78');
@@ -536,6 +539,19 @@ function highlightStage(stageName) {
       d3.select(this).attr('opacity', 1);
     }
   });
+}
+
+// Column background highlight (hover-only, different color from green nodes)
+function showColumnHighlight(stageName) {
+  d3.selectAll('.col-bg').each(function() {
+    if (d3.select(this).attr('data-stage') === stageName) {
+      d3.select(this).attr('fill', 'rgba(140,180,255,0.06)');
+    }
+  });
+}
+
+function hideColumnHighlight() {
+  d3.selectAll('.col-bg').attr('fill', 'rgba(0,0,0,0)');
 }
 
 // ============================================================
@@ -1071,6 +1087,43 @@ function renderSankey(data) {
     links: links.map(function(d) { return Object.assign({}, d); })
   });
 
+  // Compute column boundaries for stage backgrounds
+  var stageColumns = {};
+  graph.nodes.forEach(function(nd) {
+    var stage = nodeStages[nd.name];
+    if (!stageColumns[stage]) {
+      stageColumns[stage] = { minX: Infinity, maxX: -Infinity };
+    }
+    if (nd.x0 < stageColumns[stage].minX) stageColumns[stage].minX = nd.x0;
+    if (nd.x1 > stageColumns[stage].maxX) stageColumns[stage].maxX = nd.x1;
+  });
+
+  // Draw column background rects (behind everything, sized to title width)
+  var stageNames = {
+    entry: 'Entry Vector', encrypted: 'Encryption', stolen: 'Data Stolen',
+    backup: 'Backup Lost', ransom: 'Paid Ransom', recovery: 'Recovery'
+  };
+
+  var columnBgs = g.append('g').attr('class', 'column-bgs');
+  Object.entries(stageColumns).forEach(function(pair) {
+    var stage = pair[0];
+    var bounds = pair[1];
+    var titleText = stageNames[stage] || stage;
+    var titleW = titleText.length * 8 + 20;
+    var centerX = (bounds.minX + bounds.maxX) / 2;
+    var colW = Math.max(bounds.maxX - bounds.minX + 28, titleW);
+    columnBgs.append('rect')
+      .attr('class', 'col-bg')
+      .attr('data-stage', stage)
+      .attr('x', centerX - colW / 2)
+      .attr('y', -24)
+      .attr('width', colW)
+      .attr('height', h + 32)
+      .attr('fill', 'rgba(0,0,0,0)')
+      .attr('rx', 4)
+      .style('transition', 'fill 0.15s');
+  });
+
   // Draw links with HIGHER default opacity
   var linkPaths = g.append('g').selectAll('path')
     .data(graph.links).join('path')
@@ -1079,6 +1132,24 @@ function renderSankey(data) {
     .attr('stroke-width', function(d) { return Math.max(1, d.width); })
     .attr('stroke', function(d) { return getSankeyColor(d.target.name); })
     .attr('stroke-opacity', 0.3);
+
+  // Band hover: highlight source and target columns
+  linkPaths
+    .on('mouseenter', function(event, d) {
+      highlightStage(nodeStages[d.source.name]);
+      highlightStage(nodeStages[d.target.name]);
+      showColumnHighlight(nodeStages[d.source.name]);
+      showColumnHighlight(nodeStages[d.target.name]);
+    })
+    .on('mouseleave', function() {
+      hideColumnHighlight();
+      clearStageHighlights();
+      Object.keys(selectedSankeyNodes).forEach(function(stage) {
+        if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
+          highlightStage(stage);
+        }
+      });
+    });
 
   // Draw nodes
   var nodeGroups = g.append('g').selectAll('g')
@@ -1113,10 +1184,6 @@ function renderSankey(data) {
     .text(function(d) { return displayName(d.name); });
 
   // Render stage titles in SVG centered on each column
-  var stageNames = {
-    entry: 'Entry Vector', encrypted: 'Encryption', stolen: 'Data Stolen',
-    backup: 'Backup Lost', ransom: 'Paid Ransom', recovery: 'Recovery'
-  };
   var stagePositions = {};
   graph.nodes.forEach(function(nd) {
     var stage = nodeStages[nd.name];
@@ -1224,14 +1291,15 @@ function renderSankey(data) {
   nodeGroups
     .on('mouseenter', function(event, d) {
       highlightStage(nodeStages[d.name]);
+      showColumnHighlight(nodeStages[d.name]);
 
       var totalBase = monthFiltered.length;
-      var count, contextLabel;
+      var count, contextLabel, denomLabel;
 
       if (hasSankeySelection()) {
         // Count how many of the currently filtered incidents match this node
         count = sankeyFiltered.filter(function(inc) { return matchesNode(inc, d.name); }).length;
-        contextLabel = sankeyFiltered.length + ' filtered';
+        denomLabel = sankeyFiltered.length.toLocaleString() + ' filtered incidents';
 
         // Also check if adding this node would produce 0 results
         var testNodes = {};
@@ -1254,13 +1322,13 @@ function renderSankey(data) {
         }
       } else {
         count = d.value || 0;
-        contextLabel = totalBase.toLocaleString() + ' total';
+        denomLabel = totalBase.toLocaleString() + ' total incidents';
       }
 
       var pctOfTotal = totalBase > 0 ? ((count / totalBase) * 100).toFixed(2) : '0.00';
       tooltip.innerHTML = '<strong>' + d.name + '</strong><br>' +
-        count.toLocaleString() + ' of ' + contextLabel + ' incidents (' + pctOfTotal + '%)<br>' +
-        '<span style="color:#5a8a6e;font-size:9px;">' + orgLabel + ' | ' + timeLabel + '</span>';
+        count.toLocaleString() + ' incidents<br>' +
+        '<span style="color:#5a8a6e;font-size:9px;">' + pctOfTotal + '% of ' + denomLabel + ' | ' + orgLabel + ' | ' + timeLabel + '</span>';
       tooltip.classList.add('visible');
     })
     .on('mousemove', function(event) {
@@ -1272,6 +1340,7 @@ function renderSankey(data) {
     })
     .on('mouseleave', function() {
       tooltip.classList.remove('visible');
+      hideColumnHighlight();
       clearStageHighlights();
       Object.keys(selectedSankeyNodes).forEach(function(stage) {
         if (selectedSankeyNodes[stage] && selectedSankeyNodes[stage].size > 0) {
@@ -1408,6 +1477,95 @@ function highlightSankey(ids) {
 }
 
 // ============================================================
+// VIEW 3 -> VIEW 1/2 BIDIRECTIONAL FILTERING
+// ============================================================
+var v3SelectedIds = null;
+
+function applyV3Selection(selectedIds) {
+  v3SelectedIds = selectedIds;
+  var v3Data = sankeyFiltered.filter(function(d) { return selectedIds.has(d.id); });
+
+  // Re-render ECG with only selected incidents
+  renderECG(v3Data);
+
+  // Adjust Sankey band widths for selected incidents
+  var linkPaths = window.sankeyLinkPaths;
+  if (linkPaths) {
+    linkPaths.transition().duration(300)
+      .attr('stroke-width', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var overlap = 0;
+        for (var id of linkIds) {
+          if (selectedIds.has(id)) overlap++;
+        }
+        if (overlap === 0) return 1;
+        var ratio = overlap / (link.value || 1);
+        return Math.max(1, link.width * ratio);
+      })
+      .attr('stroke', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var hasMatch = false;
+        for (var id of linkIds) {
+          if (selectedIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? getNeonColor(link.target.name) : getSankeyColor(link.target.name);
+      })
+      .attr('stroke-opacity', function(link) {
+        var key = link.source.name + '|||' + link.target.name;
+        var linkIds = sankeyLinkIncidents[key] || new Set();
+        var hasMatch = false;
+        for (var id of linkIds) {
+          if (selectedIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.85 : 0.08;
+      });
+  }
+}
+
+function clearV3Selection() {
+  v3SelectedIds = null;
+  // Restore ECG to current filter state
+  renderECG(hasSankeySelection() ? sankeyFiltered : orgFiltered);
+  // Restore Sankey bands
+  var linkPaths = window.sankeyLinkPaths;
+  if (linkPaths) {
+    if (hasSankeySelection()) {
+      var filteredIds = new Set(sankeyFiltered.map(function(dd) { return dd.id; }));
+      linkPaths.transition().duration(300)
+        .attr('stroke-width', function(link) {
+          var key = link.source.name + '|||' + link.target.name;
+          var linkIds = sankeyLinkIncidents[key] || new Set();
+          var overlap = 0;
+          for (var id of linkIds) { if (filteredIds.has(id)) overlap++; }
+          if (overlap === 0) return 1;
+          return Math.max(1, link.width * (overlap / (link.value || 1)));
+        })
+        .attr('stroke', function(link) {
+          var key = link.source.name + '|||' + link.target.name;
+          var linkIds = sankeyLinkIncidents[key] || new Set();
+          var hasMatch = false;
+          for (var id of linkIds) { if (filteredIds.has(id)) { hasMatch = true; break; } }
+          return hasMatch ? getNeonColor(link.target.name) : getSankeyColor(link.target.name);
+        })
+        .attr('stroke-opacity', function(link) {
+          var key = link.source.name + '|||' + link.target.name;
+          var linkIds = sankeyLinkIncidents[key] || new Set();
+          var hasMatch = false;
+          for (var id of linkIds) { if (filteredIds.has(id)) { hasMatch = true; break; } }
+          return hasMatch ? 0.85 : 0.08;
+        });
+    } else {
+      linkPaths.transition().duration(300)
+        .attr('stroke-width', function(d) { return Math.max(1, d.width); })
+        .attr('stroke', function(d) { return getSankeyColor(d.target.name); })
+        .attr('stroke-opacity', 0.3);
+    }
+  }
+}
+
+// ============================================================
 // VIEW 3: DUAL MODE (SCATTER / GROUPED)
 // ============================================================
 function setViewMode(mode) {
@@ -1537,30 +1695,13 @@ function renderScatter(data) {
     .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 500)
     .text(FIELD_LABELS[scatterY] || scatterY);
 
-  // Dots
-  var dots = g.selectAll('circle').data(data).join('circle')
-    .attr('cx', function(d) { return xScale(xVal(d)); })
-    .attr('cy', function(d) { return yScale(yVal(d)); })
-    .attr('r', 3)
-    .attr('fill', function(d) { return severityColor(d.composite); })
-    .attr('opacity', 0.6)
-    .attr('stroke', 'none')
-    .attr('cursor', 'pointer');
-
-  // Click for drill-down detail
-  dots.on('click', function(event, d) {
-    event.stopPropagation();
-    showDetailPanel(d, event);
-  });
-
-  // 2D Brush
+  // 2D Brush (created BEFORE dots so dots sit on top and receive clicks)
   var brush = d3.brush().extent([[0, 0], [w, h]])
     .on('brush end', function(event) {
       svg.selectAll('.centroid-group').remove();
       if (!event.selection) {
         highlightSet = null;
-        highlightECG(null);
-        highlightSankey(null);
+        clearV3Selection();
         dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
         restoreInfoText();
         return;
@@ -1610,12 +1751,28 @@ function renderScatter(data) {
       }
 
       document.getElementById('brush-info').innerHTML =
-        'Explorer: <span>' + selected.size + '</span> incidents selected';
-      highlightECG(selected);
-      highlightSankey(selected);
+        'Explorer: <span>' + selected.size + '</span> incidents selected - ECG and Sankey updated';
+      applyV3Selection(selected);
     });
 
   g.append('g').call(brush);
+
+  // Dots (created AFTER brush so they sit on top and receive click events)
+  var dots = g.selectAll('circle').data(data).join('circle')
+    .attr('cx', function(d) { return xScale(xVal(d)); })
+    .attr('cy', function(d) { return yScale(yVal(d)); })
+    .attr('r', 3)
+    .attr('fill', function(d) { return severityColor(d.composite); })
+    .attr('opacity', 0.6)
+    .attr('stroke', 'none')
+    .attr('cursor', 'pointer');
+
+  // Click for drill-down detail
+  dots.on('click', function(event, d) {
+    event.stopPropagation();
+    showDetailPanel(d, event);
+  });
+
   window.v3Dots = dots;
 }
 
@@ -1697,32 +1854,12 @@ function renderGrouped(data) {
     .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 500)
     .text(FIELD_LABELS[scatterY] || scatterY);
 
-  // Jittered dots
-  seedRandom(42);
-  var dots = g.selectAll('circle').data(data).join('circle')
-    .attr('cx', function(d) {
-      return xScale(d[groupByField]) + xScale.bandwidth() * 0.15 + seededRandom() * xScale.bandwidth() * 0.7;
-    })
-    .attr('cy', function(d) { return yScale(yVal(d)); })
-    .attr('r', 3)
-    .attr('fill', function(d) { return severityColor(d.composite); })
-    .attr('opacity', 0.6)
-    .attr('stroke', 'none')
-    .attr('cursor', 'pointer');
-
-  // Click for drill-down
-  dots.on('click', function(event, d) {
-    event.stopPropagation();
-    showDetailPanel(d, event);
-  });
-
-  // Brush
+  // Brush (created BEFORE dots so dots sit on top for click events)
   var brush = d3.brush().extent([[0, 0], [w, h]])
     .on('brush end', function(event) {
       if (!event.selection) {
         highlightSet = null;
-        highlightECG(null);
-        highlightSankey(null);
+        clearV3Selection();
         dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
         restoreInfoText();
         return;
@@ -1743,12 +1880,31 @@ function renderGrouped(data) {
         .attr('r', function(d) { return selected.has(d.id) ? 4 : 2; });
 
       document.getElementById('brush-info').innerHTML =
-        'Explorer: <span>' + selected.size + '</span> incidents selected';
-      highlightECG(selected);
-      highlightSankey(selected);
+        'Explorer: <span>' + selected.size + '</span> incidents selected - ECG and Sankey updated';
+      applyV3Selection(selected);
     });
 
   g.append('g').call(brush);
+
+  // Jittered dots (created AFTER brush so they receive click events)
+  seedRandom(42);
+  var dots = g.selectAll('circle').data(data).join('circle')
+    .attr('cx', function(d) {
+      return xScale(d[groupByField]) + xScale.bandwidth() * 0.15 + seededRandom() * xScale.bandwidth() * 0.7;
+    })
+    .attr('cy', function(d) { return yScale(yVal(d)); })
+    .attr('r', 3)
+    .attr('fill', function(d) { return severityColor(d.composite); })
+    .attr('opacity', 0.6)
+    .attr('stroke', 'none')
+    .attr('cursor', 'pointer');
+
+  // Click for drill-down
+  dots.on('click', function(event, d) {
+    event.stopPropagation();
+    showDetailPanel(d, event);
+  });
+
   window.v3Dots = dots;
 }
 

@@ -14,4 +14,3 @@ I'm assuming you've cloned the repo and are in the project directory
 = Paste command: npx serve
 - Terminal will output clickable URLs, enjoy
 
-If you can't do any of these idk how to help bruh im tired

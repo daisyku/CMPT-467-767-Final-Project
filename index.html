@@ -30,7 +30,7 @@
     align-items: center;
     margin-bottom: 10px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(0,255,120,0.1);
+    border-bottom: 2px solid rgba(0,255,120,0.2);
   }
 
   .top-bar h1 {
@@ -47,38 +47,40 @@
     align-items: center;
   }
 
-  .org-filters { display: flex; gap: 4px; }
+  .org-filters { display: flex; gap: 4px; align-items: center; }
 
   .org-btn {
     background: #111916;
-    border: 1px solid rgba(0,255,120,0.1);
-    color: #5a8a6e;
-    padding: 4px 10px;
+    border: 2px solid rgba(0,255,120,0.2);
+    color: #c8ffe0;
+    padding: 5px 12px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
     letter-spacing: 1px;
   }
 
-  .org-btn:hover { border-color: rgba(0,255,120,0.3); color: #c8ffe0; }
-  .org-btn.active { background: rgba(0,255,120,0.08); border-color: #00ff78; color: #00ff78; }
+  .org-btn:hover { border-color: rgba(0,255,120,0.5); color: #00ff78; }
+  .org-btn.active { background: rgba(0,255,120,0.1); border-color: #00ff78; color: #00ff78; font-weight: 600; }
 
   .help-btn {
     background: #111916;
-    border: 1px solid rgba(0,255,120,0.2);
-    color: #5a8a6e;
-    padding: 4px 12px;
+    border: 2px solid rgba(0,255,120,0.3);
+    color: #c8ffe0;
+    padding: 5px 14px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
     letter-spacing: 1px;
   }
 
-  .help-btn:hover { border-color: #00ff78; color: #00ff78; }
+  .help-btn:hover { border-color: #00ff78; color: #00ff78; background: rgba(0,255,120,0.05); }
 
   .view-panel {
     background: #0d1210;
-    border: 1px solid rgba(0,255,120,0.1);
+    border: 2px solid rgba(0,255,120,0.15);
     overflow: hidden;
   }
 
@@ -87,7 +89,7 @@
     letter-spacing: 2px;
     color: #00ff78;
     padding: 8px 12px;
-    border-bottom: 1px solid rgba(0,255,120,0.1);
+    border-bottom: 2px solid rgba(0,255,120,0.15);
     font-weight: 600;
     display: flex;
     justify-content: space-between;
@@ -131,6 +133,7 @@
     gap: 8px;
     padding: 4px 10px;
     align-items: center;
+    justify-content: center;
     font-size: 10px;
     color: #c8ffe0;
     border-bottom: 1px solid rgba(0,255,120,0.06);
@@ -168,16 +171,17 @@
 
   .reset-btn {
     background: #111916;
-    border: 1px solid rgba(0,255,120,0.2);
-    color: #5a8a6e;
-    padding: 2px 10px;
+    border: 2px solid rgba(0,255,120,0.25);
+    color: #c8ffe0;
+    padding: 3px 10px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
-    letter-spacing: 1px;
+    line-height: 1;
   }
 
-  .reset-btn:hover { border-color: #00ff78; color: #00ff78; }
+  .reset-btn:hover { border-color: #00ff78; color: #00ff78; background: rgba(0,255,120,0.05); }
 
   .sankey-link { fill: none; transition: stroke-opacity 0.15s; cursor: pointer; }
   .sankey-node rect { cursor: pointer; rx: 2; ry: 2; }
@@ -192,8 +196,8 @@
     position: fixed;
     pointer-events: none;
     background: rgba(13,18,16,0.95);
-    border: 1px solid rgba(0,255,120,0.3);
-    padding: 6px 10px;
+    border: 2px solid rgba(0,255,120,0.4);
+    padding: 8px 12px;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
     color: #c8ffe0;
@@ -208,18 +212,19 @@
   .severity-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 2px 12px 4px;
-    font-size: 9px;
-    color: #5a8a6e;
+    gap: 8px;
+    padding: 4px 12px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #c8ffe0;
   }
 
   .severity-gradient {
     flex: 1;
-    height: 6px;
+    height: 8px;
     background: linear-gradient(to right, #00ff78 0%, #8ae050 20%, #c8c030 35%, #ffcc00 45%, #ff8833 60%, #ff4433 80%, #ff2244 100%);
-    opacity: 0.7;
-    border-radius: 2px;
+    opacity: 1;
+    border-radius: 3px;
   }
 
   .brush-info {
@@ -282,23 +287,25 @@
 
   <div class="top-bar">
     <h1>HEALTHCARE RANSOMWARE 2024</h1>
-    <div class="top-bar-right">
-      <div class="org-filters" id="org-filters">
-        <button class="org-btn active" data-org="All">All</button>
-        <button class="org-btn" data-org="Hospital">Hospital</button>
-        <button class="org-btn" data-org="Clinic">Clinic</button>
-        <button class="org-btn" data-org="Pharma">Pharma</button>
-        <button class="org-btn" data-org="Research Lab">Lab</button>
-        <button class="org-btn" data-org="Insurance">Insurance</button>
-        <button class="reset-btn" onclick="resetOrgFilter()">Reset</button>
-      </div>
-      <button class="help-btn" onclick="openExplanation()">? How to Read</button>
-    </div>
+    <button class="help-btn" onclick="openExplanation()">Guide</button>
   </div>
 
   <!-- ECG VIEW -->
   <div class="view-panel ecg-panel">
-    <div class="view-label"><span>ECG Monitor: Monthly Severity (brush to select months)</span></div>
+    <div class="view-label">
+      <span>ECG Monitor: Monthly Severity</span>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <div class="org-filters" id="org-filters">
+          <button class="org-btn active" data-org="All">All</button>
+          <button class="org-btn" data-org="Hospital">Hospital</button>
+          <button class="org-btn" data-org="Clinic">Clinic</button>
+          <button class="org-btn" data-org="Pharma">Pharma</button>
+          <button class="org-btn" data-org="Research Lab">Lab</button>
+          <button class="org-btn" data-org="Insurance">Insurance</button>
+          <button class="reset-btn" onclick="resetOrgFilter()" title="Reset organization filter">&#x21BB;</button>
+        </div>
+      </div>
+    </div>
     <svg id="ecg-svg"></svg>
     <div class="brush-info" id="brush-info">Brush months to filter views below. Click Sankey nodes to build a path filter.</div>
     <div class="severity-bar">
@@ -311,7 +318,7 @@
     <div class="view-panel sankey-panel">
       <div class="view-label">
         <span>Attack Pathology (click nodes to filter, multi-select per column)</span>
-        <button class="reset-btn" onclick="resetSankeySelection()">Reset</button>
+        <button class="reset-btn" onclick="resetSankeySelection()" title="Reset path filter">&#x21BB;</button>
       </div>
       <div class="sankey-stages" id="sankey-stages" style="display:none;">
         <span data-stage="entry">Entry Vector</span>
@@ -328,43 +335,35 @@
     <div class="sankey-tooltip" id="sankey-tooltip"></div>
 
     <div class="view-panel scatter-panel" style="position:relative;">
-      <div class="view-label"><span>Incident Explorer (brush to select, click dot for details)</span></div>
+      <div class="view-label">
+        <span>Recovery Analysis (click or brush to select, updates all views)</span>
+        <button class="reset-btn" id="v3-clear" onclick="clearDotSelection()" title="Reset selection">&#x21BB;</button>
+      </div>
       <div class="view-controls">
-        <button class="mode-btn active" id="mode-scatter" onclick="setViewMode('scatter')">Scatter</button>
-        <button class="mode-btn" id="mode-grouped" onclick="setViewMode('grouped')">Grouped</button>
-        <span>Y:</span>
+        <span>Measure:</span>
         <select id="y-axis">
-          <option value="infection_rate" selected>Infection Rate %</option>
-          <option value="recovery_time">Recovery Days</option>
-          <option value="data_restored">Data Restored %</option>
-          <option value="facilities_affected">Facilities</option>
-          <option value="incidents">Incidents</option>
+          <option value="infection_rate" selected>Infection Rate</option>
+          <option value="data_restored">Data Recovery Rate</option>
+          <option value="facilities_affected">Facilities Impacted</option>
         </select>
-        <span id="x-label">X:</span>
-        <select id="x-axis">
-          <option value="recovery_time" selected>Recovery Days</option>
-          <option value="infection_rate">Infection Rate %</option>
-          <option value="data_restored">Data Restored %</option>
-          <option value="facilities_affected">Facilities</option>
-          <option value="incidents">Incidents</option>
-        </select>
-        <select id="group-by" style="display:none;">
-          <option value="monitoring_freq">Monitoring Freq</option>
+        <span>Compare:</span>
+        <select id="v3-color-by">
+          <option value="severity" selected>Overall Severity</option>
+          <option value="monitoring_freq">Monitoring Frequency</option>
           <option value="cyber_threats_tracked">Threats Tracked</option>
-          <option value="entry_method">Entry Method</option>
-          <option value="org_size">Org Size</option>
         </select>
+        <span id="v3-count" style="margin-left:auto;color:#c8ffe0;font-size:10px;"></span>
       </div>
       <svg id="scatter-svg"></svg>
+      <div id="v3-legend" style="display:flex;justify-content:center;gap:14px;padding:4px 10px;min-height:18px;flex-wrap:wrap;"></div>
+      <div class="brush-info" id="v3-info" style="min-height:18px;"></div>
       <div id="detail-container"></div>
     </div>
   </div>
 </div>
 
 <script>
-// ============================================================
 // GLOBAL STATE
-// ============================================================
 var rawData = [];
 var orgFiltered = [];
 var monthFiltered = [];
@@ -428,9 +427,7 @@ var FIELD_LABELS = {
   org_size: 'Organization Size'
 };
 
-// ============================================================
 // NODE-TO-STAGE MAPPING
-// ============================================================
 var nodeStages = {};
 ['Compromised Credentials','Exploited Vulnerability','Phishing Email',
  'RDP Exploit','Malicious Website','Infected Removable Media'].forEach(function(n) { nodeStages[n] = 'entry'; });
@@ -440,9 +437,7 @@ var nodeStages = {};
 ['Paid Ransom: Yes','Paid Ransom: No'].forEach(function(n) { nodeStages[n] = 'ransom'; });
 ['< 25%','25-50%','50-75%','75-100%'].forEach(function(n) { nodeStages[n] = 'recovery'; });
 
-// ============================================================
 // DATA MATCHING AND FILTERING
-// ============================================================
 function matchesNode(d, nodeName) {
   if (nodeStages[nodeName] === 'entry') return d.entry_method === nodeName;
   if (nodeName === 'Encrypted: Yes') return d.data_encrypted;
@@ -554,9 +549,7 @@ function hideColumnHighlight() {
   d3.selectAll('.col-bg').attr('fill', 'rgba(0,0,0,0)');
 }
 
-// ============================================================
 // SEVERITY AND COLORS
-// ============================================================
 function computeComposite(d) {
   return (d.infection_rate / 90) * 0.3 +
          (d.recovery_time / 120) * 0.25 +
@@ -618,9 +611,7 @@ function displayName(name) {
   return name;
 }
 
-// ============================================================
 // SEEDED RANDOM FOR DETERMINISTIC WAVEFORMS
-// ============================================================
 var prngSeed = 1;
 
 function seedRandom(s) { prngSeed = s; }
@@ -630,9 +621,7 @@ function seededRandom() {
   return (prngSeed - 1) / 2147483646;
 }
 
-// ============================================================
 // ECG WAVEFORM GENERATION
-// ============================================================
 function generateECGBeat(severity, numSamples) {
   var points = [];
   var i, t, y;
@@ -696,9 +685,7 @@ function generateECGBeat(severity, numSamples) {
   return points;
 }
 
-// ============================================================
 // DATA AGGREGATION
-// ============================================================
 function aggregateMonthly(data) {
   var monthly = [];
   for (var m = 0; m < 12; m++) {
@@ -732,16 +719,14 @@ function computeNormBounds(data) {
   normBoundsHi = hi + pad;
 }
 
-// ============================================================
 // RENDER ECG
-// ============================================================
 function renderECG(data) {
   var monthly = aggregateMonthly(data);
   var severities = normalizeMonthly(monthly);
   var container = document.querySelector('.ecg-panel');
-  var margin = { top: 30, right: 20, bottom: 30, left: 36 };
+  var margin = { top: 30, right: 20, bottom: 34, left: 80 };
   var width = container.clientWidth - margin.left - margin.right;
-  var height = 180;
+  var height = 160;
 
   var svg = d3.select('#ecg-svg')
     .attr('width', width + margin.left + margin.right)
@@ -777,9 +762,12 @@ function renderECG(data) {
 
   var highlightGroup = g.append('g').attr('class', 'ecg-highlights');
 
-  // Label
-  g.append('text').attr('x', -4).attr('y', -18)
-    .attr('fill', '#5a8a6e').attr('font-size', 9)
+  // Severity score axis label (left side, vertical)
+  g.append('text')
+    .attr('x', -(height / 2)).attr('y', -60)
+    .attr('transform', 'rotate(-90)')
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 600)
     .attr('font-family', "'IBM Plex Mono', monospace")
     .attr('letter-spacing', '1px').text('SEVERITY SCORE');
 
@@ -835,15 +823,15 @@ function renderECG(data) {
       g.append('text')
         .attr('x', mCenter).attr('y', height + 14)
         .attr('text-anchor', 'middle')
-        .attr('font-size', 10).attr('font-weight', 500)
-        .attr('fill', '#2d4a3a')
+        .attr('font-size', 11).attr('font-weight', 600)
+        .attr('fill', '#3a5a4a')
         .attr('font-family', "'IBM Plex Mono', monospace")
         .text(MONTHS[m]);
 
       g.append('text')
-        .attr('x', mCenter).attr('y', height + 24)
+        .attr('x', mCenter).attr('y', height + 26)
         .attr('text-anchor', 'middle')
-        .attr('font-size', 8).attr('fill', '#2d4a3a')
+        .attr('font-size', 10).attr('font-weight', 500).attr('fill', '#3a5a4a')
         .attr('font-family', "'IBM Plex Mono', monospace")
         .text('n=0');
 
@@ -879,9 +867,9 @@ function renderECG(data) {
 
     // Severity score label
     g.append('text')
-      .attr('x', xScale(m + 0.5)).attr('y', -6)
+      .attr('x', xScale(m + 0.5)).attr('y', -8)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 11).attr('font-weight', 600)
+      .attr('font-size', 13).attr('font-weight', 700)
       .attr('fill', color)
       .attr('font-family', "'IBM Plex Mono', monospace")
       .text(Math.round(severities[m] * 100));
@@ -890,27 +878,29 @@ function renderECG(data) {
     g.append('text')
       .attr('x', xScale(m + 0.5)).attr('y', height + 14)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 10).attr('font-weight', 500)
-      .attr('fill', '#5a8a6e')
+      .attr('font-size', 11).attr('font-weight', 600)
+      .attr('fill', '#c8ffe0')
       .attr('font-family', "'IBM Plex Mono', monospace")
       .text(MONTHS[m]);
 
-    // Incident count below month (always show, including 0)
+    // Incident count below month
     g.append('text')
-      .attr('x', xScale(m + 0.5)).attr('y', height + 24)
+      .attr('x', xScale(m + 0.5)).attr('y', height + 26)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 8)
-      .attr('fill', '#5a8a6e')
+      .attr('font-size', 10).attr('font-weight', 500)
+      .attr('fill', '#8ab8a0')
       .attr('font-family', "'IBM Plex Mono', monospace")
       .text('n=' + monthly[m].count);
   }
 
-  // Incidents axis label
-  g.append('text').attr('x', -4).attr('y', height + 24)
-    .attr('fill', '#2d4a3a').attr('font-size', 7)
+  // Incidents axis label (left side, vertical)
+  g.append('text')
+    .attr('x', -(height / 2)).attr('y', -42)
+    .attr('transform', 'rotate(-90)')
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#8ab8a0').attr('font-size', 9).attr('font-weight', 500)
     .attr('font-family', "'IBM Plex Mono', monospace")
-    .attr('text-anchor', 'end')
-    .text('INCIDENTS');
+    .text('# INCIDENTS / MONTH');
 
   // Brush interaction
   var brush = d3.brushX()
@@ -987,9 +977,7 @@ function highlightECG(ids) {
   }
 }
 
-// ============================================================
 // RENDER SANKEY
-// ============================================================
 function renderSankey(data) {
   sankeyLinkIncidents = {};
   sankeyNodeIncidents = {};
@@ -1077,7 +1065,7 @@ function renderSankey(data) {
   var sankey = d3.sankey()
     .nodeId(function(d) { return d.index; })
     .nodeWidth(12)
-    .nodePadding(10)
+    .nodePadding(16)
     .nodeAlign(d3.sankeyLeft)
     .nodeSort(null)
     .extent([[0, 0], [w, h]]);
@@ -1168,16 +1156,20 @@ function renderSankey(data) {
   nodeGroups.append('text')
     .attr('class', 'sankey-label')
     .attr('x', function(d) {
-      return nodeStages[d.name] === 'entry' ? -6 : (d.x1 - d.x0) + 6;
+      return nodeStages[d.name] === 'entry' ? -10 : (d.x1 - d.x0) + 10;
     })
     .attr('y', function(d) { return (d.y1 - d.y0) / 2; })
     .attr('dy', '0.35em')
     .attr('text-anchor', function(d) {
       return nodeStages[d.name] === 'entry' ? 'end' : 'start';
     })
-    .attr('font-size', 11)
+    .attr('font-size', function(d) {
+      return nodeStages[d.name] === 'entry' ? 12 : 11;
+    })
     .attr('font-weight', 600)
-    .attr('fill', '#c8ffe0')
+    .attr('fill', function(d) {
+      return nodeStages[d.name] === 'entry' ? '#e0fff0' : '#c8ffe0';
+    })
     .attr('stroke', '#0a0e0d')
     .attr('stroke-width', 3)
     .attr('paint-order', 'stroke')
@@ -1197,16 +1189,16 @@ function renderSankey(data) {
     var positions = pair[1];
     var avgX = d3.mean(positions);
     var label = stageNames[stage] || stage;
-    var labelW = label.length * 7.5 + 12;
+    var labelW = label.length * 8.5 + 14;
 
     // Background rect (hidden by default, shown on highlight)
     stageTitleGroup.append('rect')
       .attr('class', 'stage-title-bg')
       .attr('data-stage', stage)
       .attr('x', avgX - labelW / 2)
-      .attr('y', -20)
+      .attr('y', -22)
       .attr('width', labelW)
-      .attr('height', 18)
+      .attr('height', 20)
       .attr('rx', 3)
       .attr('fill', 'rgba(0,255,120,0.08)')
       .attr('stroke', 'rgba(0,255,120,0.25)')
@@ -1219,7 +1211,7 @@ function renderSankey(data) {
       .attr('x', avgX)
       .attr('y', -8)
       .attr('text-anchor', 'middle')
-      .attr('font-size', 11)
+      .attr('font-size', 13)
       .attr('font-weight', 600)
       .attr('fill', '#5a8a6e')
       .attr('letter-spacing', '1px')
@@ -1279,6 +1271,31 @@ function renderSankey(data) {
         }
         return hasMatch ? 0.85 : 0.08;
       });
+
+    // Dim nodes with zero matching incidents (post-render restoration)
+    nodeGroups.selectAll('rect')
+      .attr('opacity', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        if (stageSet && stageSet.has(nd.name)) return 1;
+        var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+        var hasMatch = false;
+        for (var id of nodeIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.8 : 0.15;
+      });
+
+    nodeGroups.selectAll('.sankey-label')
+      .attr('opacity', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        if (stageSet && stageSet.has(nd.name)) return 1;
+        var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+        var hasMatch = false;
+        for (var id of nodeIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.8 : 0.25;
+      });
   }
 
   // Hover: show tooltip with accurate filtered count
@@ -1328,7 +1345,7 @@ function renderSankey(data) {
       var pctOfTotal = totalBase > 0 ? ((count / totalBase) * 100).toFixed(2) : '0.00';
       tooltip.innerHTML = '<strong>' + d.name + '</strong><br>' +
         count.toLocaleString() + ' incidents<br>' +
-        '<span style="color:#5a8a6e;font-size:9px;">' + pctOfTotal + '% of ' + denomLabel + ' | ' + orgLabel + ' | ' + timeLabel + '</span>';
+        '<span style="color:#8ab8a0;font-size:10px;">' + pctOfTotal + '% of ' + denomLabel + ' | ' + orgLabel + ' | ' + timeLabel + '</span>';
       tooltip.classList.add('visible');
     })
     .on('mousemove', function(event) {
@@ -1446,6 +1463,31 @@ function renderSankey(data) {
       }
     });
 
+    // Dim nodes that have zero matching incidents in filtered set
+    nodeGroups.selectAll('rect').transition().duration(300)
+      .attr('opacity', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        if (stageSet && stageSet.has(nd.name)) return 1;
+        var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+        var hasMatch = false;
+        for (var id of nodeIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.8 : 0.15;
+      });
+
+    nodeGroups.selectAll('.sankey-label').transition().duration(300)
+      .attr('opacity', function(nd) {
+        var stageSet = selectedSankeyNodes[nodeStages[nd.name]];
+        if (stageSet && stageSet.has(nd.name)) return 1;
+        var nodeIds = sankeyNodeIncidents[nd.name] || new Set();
+        var hasMatch = false;
+        for (var id of nodeIds) {
+          if (filteredIds.has(id)) { hasMatch = true; break; }
+        }
+        return hasMatch ? 0.8 : 0.25;
+      });
+
     // Update other views
     renderECG(sankeyFiltered);
     renderView3(sankeyFiltered);
@@ -1476,9 +1518,7 @@ function highlightSankey(ids) {
   });
 }
 
-// ============================================================
 // VIEW 3 -> VIEW 1/2 BIDIRECTIONAL FILTERING
-// ============================================================
 var v3SelectedIds = null;
 
 function applyV3Selection(selectedIds) {
@@ -1565,25 +1605,88 @@ function clearV3Selection() {
   }
 }
 
-// ============================================================
-// VIEW 3: DUAL MODE (SCATTER / GROUPED)
-// ============================================================
-function setViewMode(mode) {
-  viewMode = mode;
-  document.getElementById('mode-scatter').classList.toggle('active', mode === 'scatter');
-  document.getElementById('mode-grouped').classList.toggle('active', mode === 'grouped');
-  document.getElementById('x-axis').style.display = mode === 'scatter' ? '' : 'none';
-  document.getElementById('x-label').style.display = mode === 'scatter' ? '' : 'none';
-  document.getElementById('group-by').style.display = mode === 'grouped' ? '' : 'none';
-  renderView3(sankeyFiltered);
+// VIEW 3: RECOVERY ANALYSIS
+var selectedDotIds = new Set();
+var v3ColorBy = 'severity';
+
+var MEASURE_LABELS = {
+  infection_rate: 'Infection Rate (%)',
+  data_restored: 'Data Recovery Rate (%)',
+  facilities_affected: 'Facilities Impacted'
+};
+
+// Neon categorical color palettes
+var categoryColors = {
+  monitoring_freq: {
+    'More than once per day': '#00ffcc',
+    'Daily': '#00ff78',
+    'Weekly': '#50aaff',
+    'Monthly': '#ff6644'
+  },
+  cyber_threats_tracked: {
+    '1-50': '#ff5566',
+    '50-350': '#ffaa30',
+    '350+': '#00ff78'
+  }
+};
+
+function getCategoryColor(d) {
+  if (v3ColorBy === 'severity') return severityColor(d.composite);
+  var palette = categoryColors[v3ColorBy];
+  if (!palette) return severityColor(d.composite);
+  return palette[d[v3ColorBy]] || '#5a8a6e';
 }
 
 function renderView3(data) {
   document.getElementById('detail-container').innerHTML = '';
-  if (viewMode === 'scatter') {
-    renderScatter(data);
+  renderScatter(data);
+  updateV3Info();
+}
+
+function updateV3Info() {
+  if (selectedDotIds.size > 0) {
+    document.getElementById('v3-info').innerHTML =
+      '<span>' + selectedDotIds.size + '</span> incidents selected';
   } else {
-    renderGrouped(data);
+    document.getElementById('v3-info').innerHTML = '';
+  }
+}
+
+function clearDotSelection() {
+  selectedDotIds = new Set();
+  clearV3Selection();
+  updateDotAppearance();
+  updateV3Info();
+  document.getElementById('detail-container').innerHTML = '';
+}
+
+function toggleDot(d) {
+  if (selectedDotIds.has(d.id)) {
+    selectedDotIds.delete(d.id);
+  } else {
+    selectedDotIds.add(d.id);
+  }
+  showDetailPanel(d);
+  updateDotAppearance();
+  updateV3Info();
+  if (selectedDotIds.size > 0) {
+    applyV3Selection(selectedDotIds);
+  } else {
+    clearV3Selection();
+  }
+}
+
+function updateDotAppearance() {
+  var dots = window.v3Dots;
+  if (!dots) return;
+  if (selectedDotIds.size === 0) {
+    dots.attr('opacity', 0.85).attr('stroke', 'none').attr('r', 3)
+      .attr('fill', function(d) { return getCategoryColor(d); });
+  } else {
+    dots.attr('opacity', function(d) { return selectedDotIds.has(d.id) ? 0.95 : 0.12; })
+      .attr('stroke', function(d) { return selectedDotIds.has(d.id) ? '#fff' : 'none'; })
+      .attr('stroke-width', function(d) { return selectedDotIds.has(d.id) ? 1.5 : 0; })
+      .attr('r', function(d) { return selectedDotIds.has(d.id) ? 5 : 2; });
   }
 }
 
@@ -1591,27 +1694,25 @@ function closeDetailPanel() {
   document.getElementById('detail-container').innerHTML = '';
 }
 
-function showDetailPanel(d, event) {
+function showDetailPanel(d) {
   var container = document.getElementById('detail-container');
   var badClass = function(val, threshold, lower) {
     if (lower) return val < threshold ? 'good' : 'bad';
     return val > threshold ? 'good' : 'bad';
   };
-
   var panel = document.createElement('div');
   panel.className = 'detail-panel';
   panel.style.right = '16px';
   panel.style.top = '60px';
-
   var closeBtn = document.createElement('div');
   closeBtn.className = 'detail-close';
   closeBtn.textContent = '\u00D7';
   closeBtn.addEventListener('click', closeDetailPanel);
   panel.appendChild(closeBtn);
-
   var rows = [
     ['', d.id, 'detail-id'],
-    ['Organization', d.org_type + ' (' + d.org_size + ')'],
+    ['Organization', d.org_type],
+    ['Organization Size', d.org_size],
     ['Entry Method', d.entry_method],
     ['Infection Rate', d.infection_rate.toFixed(1) + '%', badClass(d.infection_rate, 50, true)],
     ['Recovery Time', d.recovery_time + ' days', badClass(d.recovery_time, 40, true)],
@@ -1624,7 +1725,6 @@ function showDetailPanel(d, event) {
     ['Monitoring Freq', d.monitoring_freq],
     ['Threats Tracked', d.cyber_threats_tracked]
   ];
-
   rows.forEach(function(row) {
     if (row[2] === 'detail-id') {
       var idDiv = document.createElement('div');
@@ -1645,292 +1745,143 @@ function showDetailPanel(d, event) {
     rowDiv.appendChild(val);
     panel.appendChild(rowDiv);
   });
-
   container.innerHTML = '';
   container.appendChild(panel);
 }
 
 function renderScatter(data) {
+  v3ColorBy = document.getElementById('v3-color-by').value;
+  var displayData = data;
   var container = document.querySelector('.scatter-panel');
   var fullWidth = container.clientWidth;
-  var fullHeight = 380;
+  var fullHeight = 400;
   var margin = { top: 10, right: 16, bottom: 40, left: 50 };
   var w = fullWidth - margin.left - margin.right;
   var h = fullHeight - margin.top - margin.bottom;
-
   var svg = d3.select('#scatter-svg').attr('width', fullWidth).attr('height', fullHeight);
   svg.selectAll('*').remove();
   var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-  if (data.length === 0) {
+  // Update incident count in HTML (not SVG)
+  document.getElementById('v3-count').textContent = displayData.length.toLocaleString() + ' incidents shown';
+
+  if (displayData.length === 0) {
     g.append('text').attr('x', w / 2).attr('y', h / 2)
-      .attr('text-anchor', 'middle').attr('fill', '#5a8a6e').text('No incidents in selection');
+      .attr('text-anchor', 'middle').attr('fill', '#5a8a6e').text('No incidents in current selection');
+    document.getElementById('v3-legend').innerHTML = '';
     return;
   }
 
-  var xVal = function(d) { return d[scatterX]; };
+  // Fixed X = Recovery Days
+  var xVal = function(d) { return d.recovery_time; };
   var yVal = function(d) { return d[scatterY]; };
-
   var xScale = d3.scaleLinear()
-    .domain([d3.min(data, xVal) * 0.95, d3.max(data, xVal) * 1.05]).nice().range([0, w]);
+    .domain([0, d3.max(displayData, xVal) * 1.05]).nice().range([0, w]);
   var yScale = d3.scaleLinear()
-    .domain([d3.min(data, yVal) * 0.95, d3.max(data, yVal) * 1.05]).nice().range([h, 0]);
+    .domain([0, d3.max(displayData, yVal) * 1.05]).nice().range([h, 0]);
 
-  // Axes with grid
+  // Axes
   g.append('g').attr('transform', 'translate(0,' + h + ')')
     .call(d3.axisBottom(xScale).ticks(6).tickSize(-h))
     .selectAll('line').attr('stroke', 'rgba(0,255,120,0.05)');
   g.append('g').call(d3.axisLeft(yScale).ticks(6).tickSize(-w))
     .selectAll('line').attr('stroke', 'rgba(0,255,120,0.05)');
-  g.selectAll('.domain').attr('stroke', 'rgba(0,255,120,0.1)');
-  g.selectAll('.tick text').attr('fill', '#5a8a6e').attr('font-family', "'IBM Plex Mono', monospace").attr('font-size', 9);
+  g.selectAll('.domain').attr('stroke', 'rgba(0,255,120,0.15)');
+  g.selectAll('.tick text').attr('fill', '#c8ffe0').attr('font-family', "'IBM Plex Mono', monospace").attr('font-size', 10);
 
-  // Axis labels
   g.append('text').attr('x', w / 2).attr('y', h + 32)
     .attr('text-anchor', 'middle').attr('fill', '#c8ffe0')
     .attr('font-size', 10).attr('font-weight', 500)
-    .text(FIELD_LABELS[scatterX] || scatterX);
+    .text('Recovery Time (Days)');
   g.append('text').attr('x', -h / 2).attr('y', -38)
     .attr('transform', 'rotate(-90)').attr('text-anchor', 'middle')
     .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 500)
-    .text(FIELD_LABELS[scatterY] || scatterY);
+    .text(MEASURE_LABELS[scatterY] || scatterY);
 
-  // 2D Brush (created BEFORE dots so dots sit on top and receive clicks)
+  // Color legend rendered in HTML div (outside graph)
+  var legendDiv = document.getElementById('v3-legend');
+  legendDiv.innerHTML = '';
+  if (v3ColorBy !== 'severity' && categoryColors[v3ColorBy]) {
+    var palette = categoryColors[v3ColorBy];
+    Object.entries(palette).forEach(function(pair) {
+      var item = document.createElement('span');
+      item.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#c8ffe0;font-family:IBM Plex Mono,monospace;';
+      var dot = document.createElement('span');
+      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;display:inline-block;background:' + pair[1] + ';';
+      item.appendChild(dot);
+      item.appendChild(document.createTextNode(pair[0]));
+      legendDiv.appendChild(item);
+    });
+  } else if (v3ColorBy === 'severity') {
+    legendDiv.innerHTML =
+      '<span style="display:inline-flex;align-items:center;gap:6px;font-size:9px;color:#5a8a6e;font-family:IBM Plex Mono,monospace;">' +
+      'LOW <span style="width:80px;height:6px;border-radius:2px;display:inline-block;background:linear-gradient(to right,#00ff78,#ffcc00 45%,#ff2244);"></span> CRITICAL</span>';
+  }
+
+  // Brush FIRST (under dots)
   var brush = d3.brush().extent([[0, 0], [w, h]])
     .on('brush end', function(event) {
-      svg.selectAll('.centroid-group').remove();
-      if (!event.selection) {
-        highlightSet = null;
-        clearV3Selection();
-        dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
-        restoreInfoText();
-        return;
-      }
+      if (!event.selection) return;
       var sel = event.selection;
-      var selected = new Set();
-      data.forEach(function(d) {
+      displayData.forEach(function(d) {
         var cx = xScale(xVal(d));
         var cy = yScale(yVal(d));
         if (cx >= sel[0][0] && cx <= sel[1][0] && cy >= sel[0][1] && cy <= sel[1][1]) {
-          selected.add(d.id);
+          selectedDotIds.add(d.id);
         }
       });
-      highlightSet = selected;
-
-      dots.attr('opacity', function(d) { return selected.has(d.id) ? 0.9 : 0.06; })
-        .attr('stroke', function(d) { return selected.has(d.id) ? '#fff' : 'none'; })
-        .attr('r', function(d) { return selected.has(d.id) ? 4 : 2; });
-
-      // Centroid markers
-      var selData = data.filter(function(d) { return selected.has(d.id); });
-      if (selData.length > 0) {
-        var cg = svg.append('g').attr('class', 'centroid-group')
-          .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-        var allCx = xScale(d3.mean(data, xVal));
-        var allCy = yScale(d3.mean(data, yVal));
-        var selCx = xScale(d3.mean(selData, xVal));
-        var selCy = yScale(d3.mean(selData, yVal));
-
-        cg.append('line')
-          .attr('x1', allCx).attr('y1', allCy).attr('x2', selCx).attr('y2', selCy)
-          .attr('stroke', '#fff').attr('stroke-width', 1)
-          .attr('stroke-dasharray', '4,3').attr('opacity', 0.4);
-        cg.append('text').attr('x', allCx).attr('y', allCy)
-          .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
-          .attr('font-size', 14).attr('fill', '#5a8a6e').text('\u25C7');
-        cg.append('text').attr('x', selCx).attr('y', selCy)
-          .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
-          .attr('font-size', 16).attr('fill', '#00ff78')
-          .style('filter', 'drop-shadow(0 0 4px rgba(0,255,120,0.5))').text('\u25C6');
-        cg.append('text').attr('x', allCx + 10).attr('y', allCy - 8)
-          .attr('font-size', 9).attr('fill', '#5a8a6e')
-          .attr('font-family', "'IBM Plex Mono', monospace").text('baseline');
-        cg.append('text').attr('x', selCx + 10).attr('y', selCy - 8)
-          .attr('font-size', 9).attr('fill', '#00ff78')
-          .attr('font-family', "'IBM Plex Mono', monospace").text('selected (' + selData.length + ')');
-      }
-
-      document.getElementById('brush-info').innerHTML =
-        'Explorer: <span>' + selected.size + '</span> incidents selected - ECG and Sankey updated';
-      applyV3Selection(selected);
+      updateDotAppearance();
+      updateV3Info();
+      if (selectedDotIds.size > 0) applyV3Selection(selectedDotIds);
+      d3.select(this).call(brush.move, null);
     });
+  g.append('g').attr('class', 'v3-brush').call(brush);
 
-  g.append('g').call(brush);
-
-  // Dots (created AFTER brush so they sit on top and receive click events)
-  var dots = g.selectAll('circle').data(data).join('circle')
+  // Dots ON TOP
+  var dots = g.selectAll('circle.dot').data(displayData).join('circle')
+    .attr('class', 'dot')
     .attr('cx', function(d) { return xScale(xVal(d)); })
     .attr('cy', function(d) { return yScale(yVal(d)); })
     .attr('r', 3)
-    .attr('fill', function(d) { return severityColor(d.composite); })
-    .attr('opacity', 0.6)
+    .attr('fill', function(d) { return getCategoryColor(d); })
+    .attr('opacity', 0.85)
     .attr('stroke', 'none')
     .attr('cursor', 'pointer');
 
-  // Click for drill-down detail
   dots.on('click', function(event, d) {
     event.stopPropagation();
-    showDetailPanel(d, event);
+    toggleDot(d);
   });
 
-  window.v3Dots = dots;
-}
-
-function renderGrouped(data) {
-  var container = document.querySelector('.scatter-panel');
-  var fullWidth = container.clientWidth;
-  var fullHeight = 380;
-  var margin = { top: 10, right: 16, bottom: 54, left: 50 };
-  var w = fullWidth - margin.left - margin.right;
-  var h = fullHeight - margin.top - margin.bottom;
-
-  var svg = d3.select('#scatter-svg').attr('width', fullWidth).attr('height', fullHeight);
-  svg.selectAll('*').remove();
-  var g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
-  if (data.length === 0) {
-    g.append('text').attr('x', w / 2).attr('y', h / 2)
-      .attr('text-anchor', 'middle').attr('fill', '#5a8a6e').text('No incidents in selection');
-    return;
-  }
-
-  groupByField = document.getElementById('group-by').value;
-  var yVal = function(d) { return d[scatterY]; };
-  var categories = Array.from(new Set(data.map(function(d) { return d[groupByField]; }))).sort();
-
-  var xScale = d3.scaleBand().domain(categories).range([0, w]).padding(0.15);
-  var yScale = d3.scaleLinear()
-    .domain([d3.min(data, yVal) * 0.95, d3.max(data, yVal) * 1.05]).nice().range([h, 0]);
-
-  // Y axis grid
-  g.append('g').call(d3.axisLeft(yScale).ticks(6).tickSize(-w))
-    .selectAll('line').attr('stroke', 'rgba(0,255,120,0.05)');
-  g.selectAll('.domain').attr('stroke', 'rgba(0,255,120,0.1)');
-  g.selectAll('.tick text').attr('fill', '#5a8a6e').attr('font-family', "'IBM Plex Mono', monospace").attr('font-size', 9);
-
-  // Column labels and backgrounds
-  categories.forEach(function(cat) {
-    var cx = xScale(cat) + xScale.bandwidth() / 2;
-
-    g.append('rect')
-      .attr('x', xScale(cat)).attr('y', 0)
-      .attr('width', xScale.bandwidth()).attr('height', h)
-      .attr('fill', 'rgba(0,255,120,0.02)')
-      .attr('stroke', 'rgba(0,255,120,0.05)');
-
-    g.append('text').attr('x', cx).attr('y', h + 14)
-      .attr('text-anchor', 'middle').attr('fill', '#c8ffe0')
-      .attr('font-size', 9).attr('font-weight', 500)
-      .attr('font-family', "'IBM Plex Mono', monospace").text(cat);
-
-    var count = data.filter(function(d) { return d[groupByField] === cat; }).length;
-    g.append('text').attr('x', cx).attr('y', h + 26)
-      .attr('text-anchor', 'middle').attr('fill', '#2d4a3a')
-      .attr('font-size', 8).attr('font-family', "'IBM Plex Mono', monospace")
-      .text('n=' + count);
-
-    // Median line
-    var catData = data.filter(function(d) { return d[groupByField] === cat; });
-    if (catData.length > 0) {
-      var median = d3.median(catData, yVal);
-      g.append('line')
-        .attr('x1', xScale(cat) + 4).attr('x2', xScale(cat) + xScale.bandwidth() - 4)
-        .attr('y1', yScale(median)).attr('y2', yScale(median))
-        .attr('stroke', '#fff').attr('stroke-width', 1.5).attr('opacity', 0.6);
-      g.append('text')
-        .attr('x', xScale(cat) + xScale.bandwidth() - 2).attr('y', yScale(median) - 4)
-        .attr('text-anchor', 'end').attr('font-size', 8).attr('fill', '#c8ffe0')
-        .attr('font-family', "'IBM Plex Mono', monospace").text(median.toFixed(0));
+  // Hover over a selected dot shows its drill-down info
+  dots.on('mouseenter', function(event, d) {
+    if (selectedDotIds.has(d.id)) {
+      showDetailPanel(d);
     }
   });
 
-  // Axis labels
-  g.append('text').attr('x', w / 2).attr('y', h + 44)
-    .attr('text-anchor', 'middle').attr('fill', '#c8ffe0')
-    .attr('font-size', 10).attr('font-weight', 500)
-    .text(FIELD_LABELS[groupByField] || groupByField);
-  g.append('text').attr('x', -h / 2).attr('y', -38)
-    .attr('transform', 'rotate(-90)').attr('text-anchor', 'middle')
-    .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 500)
-    .text(FIELD_LABELS[scatterY] || scatterY);
-
-  // Brush (created BEFORE dots so dots sit on top for click events)
-  var brush = d3.brush().extent([[0, 0], [w, h]])
-    .on('brush end', function(event) {
-      if (!event.selection) {
-        highlightSet = null;
-        clearV3Selection();
-        dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
-        restoreInfoText();
-        return;
-      }
-      var sel = event.selection;
-      var selected = new Set();
-      dots.each(function(d) {
-        var cx = +d3.select(this).attr('cx');
-        var cy = +d3.select(this).attr('cy');
-        if (cx >= sel[0][0] && cx <= sel[1][0] && cy >= sel[0][1] && cy <= sel[1][1]) {
-          selected.add(d.id);
-        }
-      });
-      highlightSet = selected;
-
-      dots.attr('opacity', function(d) { return selected.has(d.id) ? 0.9 : 0.06; })
-        .attr('stroke', function(d) { return selected.has(d.id) ? '#fff' : 'none'; })
-        .attr('r', function(d) { return selected.has(d.id) ? 4 : 2; });
-
-      document.getElementById('brush-info').innerHTML =
-        'Explorer: <span>' + selected.size + '</span> incidents selected - ECG and Sankey updated';
-      applyV3Selection(selected);
-    });
-
-  g.append('g').call(brush);
-
-  // Jittered dots (created AFTER brush so they receive click events)
-  seedRandom(42);
-  var dots = g.selectAll('circle').data(data).join('circle')
-    .attr('cx', function(d) {
-      return xScale(d[groupByField]) + xScale.bandwidth() * 0.15 + seededRandom() * xScale.bandwidth() * 0.7;
-    })
-    .attr('cy', function(d) { return yScale(yVal(d)); })
-    .attr('r', 3)
-    .attr('fill', function(d) { return severityColor(d.composite); })
-    .attr('opacity', 0.6)
-    .attr('stroke', 'none')
-    .attr('cursor', 'pointer');
-
-  // Click for drill-down
-  dots.on('click', function(event, d) {
-    event.stopPropagation();
-    showDetailPanel(d, event);
-  });
-
   window.v3Dots = dots;
+  if (selectedDotIds.size > 0) updateDotAppearance();
 }
 
 function highlightV3(ids) {
   var dots = window.v3Dots;
   if (!dots) return;
-  d3.select('#scatter-svg').selectAll('.centroid-group').remove();
   if (!ids || ids.size === 0) {
-    dots.attr('opacity', 0.6).attr('stroke', 'none').attr('r', 3);
+    dots.attr('opacity', 0.85).attr('stroke', 'none').attr('r', 3);
     return;
   }
-  dots.attr('opacity', function(d) { return ids.has(d.id) ? 0.9 : 0.06; })
+  dots.attr('opacity', function(d) { return ids.has(d.id) ? 0.95 : 0.12; })
     .attr('stroke', function(d) { return ids.has(d.id) ? '#fff' : 'none'; })
     .attr('r', function(d) { return ids.has(d.id) ? 4 : 2; });
 }
 
-// ============================================================
 // EXPLANATION PAGE (opens in new tab)
-// ============================================================
 function openExplanation() {
-  window.open('explanation.html', '_blank');
+  window.location.href = 'explanation.html';
 }
 
-// ============================================================
 // CONTROLS
-// ============================================================
 document.querySelectorAll('.org-btn').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var org = this.dataset.org;
@@ -1960,24 +1911,17 @@ document.querySelectorAll('.org-btn').forEach(function(btn) {
   });
 });
 
-document.getElementById('x-axis').addEventListener('change', function() {
-  scatterX = this.value;
-  renderView3(sankeyFiltered);
-});
-
 document.getElementById('y-axis').addEventListener('change', function() {
   scatterY = this.value;
   renderView3(sankeyFiltered);
 });
 
-document.getElementById('group-by').addEventListener('change', function() {
-  groupByField = this.value;
+document.getElementById('v3-color-by').addEventListener('change', function() {
+  v3ColorBy = this.value;
   renderView3(sankeyFiltered);
 });
 
-// ============================================================
 // LOAD DATA
-// ============================================================
 d3.csv('Healthcare_Ransomware_Dataset.csv').then(function(data) {
   rawData = data.map(function(d) {
     return {

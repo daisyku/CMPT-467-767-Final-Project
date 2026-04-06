@@ -2,30 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>How to Read This Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Dashboard Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   body { background: #0a0e0d; color: #c8ffe0; font-family: 'IBM Plex Mono', monospace; padding: 0; margin: 0; font-size: 13px; line-height: 1.7; }
   .wrap { max-width: 960px; margin: 0 auto; padding: 30px 50px 60px; }
-  h1 { color: #00ff78; font-size: 18px; letter-spacing: 3px; margin-bottom: 16px; }
-  h2 { color: #00ff78; font-size: 15px; letter-spacing: 2px; margin-top: 32px; margin-bottom: 10px; padding-top: 20px; }
-  h3 { color: #5a8a6e; font-size: 12px; letter-spacing: 1px; margin-top: 16px; margin-bottom: 4px; }
+  h1 { color: #00ff78; font-size: 20px; letter-spacing: 3px; margin-bottom: 6px; font-weight: 700; }
+  .subtitle { color: #8ab8a0; font-size: 12px; margin-bottom: 24px; }
+  h2 { color: #00ff78; font-size: 16px; letter-spacing: 2px; margin-top: 36px; margin-bottom: 12px; padding-top: 20px; border-top: 2px solid rgba(0,255,120,0.12); }
+  h3 { color: #8ab8a0; font-size: 12px; letter-spacing: 1px; margin-top: 18px; margin-bottom: 6px; font-weight: 600; }
   p { margin-bottom: 8px; }
-  .cs { display: inline-block; width: 12px; height: 12px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
-  .nav-bar { position: sticky; top: 0; background: #0a0e0d; padding: 12px 0; border-bottom: 1px solid rgba(0,255,120,0.1); display: flex; gap: 10px; align-items: center; z-index: 10; }
-  .nav-link { color: #5a8a6e; text-decoration: none; font-size: 11px; letter-spacing: 1px; padding: 4px 12px; border: 1px solid rgba(0,255,120,0.15); }
+  .cs { display: inline-block; width: 10px; height: 10px; vertical-align: middle; margin-right: 4px; border-radius: 50%; }
+  .nav-bar { position: sticky; top: 0; background: #0a0e0d; padding: 12px 0; border-bottom: 2px solid rgba(0,255,120,0.15); display: flex; gap: 8px; align-items: center; z-index: 10; }
+  .nav-link { color: #c8ffe0; text-decoration: none; font-size: 11px; font-weight: 500; letter-spacing: 1px; padding: 5px 14px; border: 2px solid rgba(0,255,120,0.2); }
   .nav-link:hover { border-color: #00ff78; color: #00ff78; }
-  .back-link { color: #00ff78; text-decoration: none; font-size: 11px; letter-spacing: 1px; padding: 4px 12px; border: 1px solid #00ff78; }
+  .back-link { color: #00ff78; text-decoration: none; font-size: 11px; font-weight: 600; letter-spacing: 1px; padding: 5px 14px; border: 2px solid #00ff78; }
   .back-link:hover { background: rgba(0,255,120,0.08); }
   .legend-row { display: flex; gap: 14px; margin: 14px 0 20px; }
-  .legend-card { flex: 1; background: #0d1210; border: 1px solid rgba(0,255,120,0.1); padding: 12px 14px; }
+  .legend-card { flex: 1; background: #0d1210; border: 2px solid rgba(0,255,120,0.1); padding: 12px 14px; }
   .legend-card h3 { margin-top: 0; }
   .legend-card canvas { display: block; width: 100%; height: 50px; margin: 8px 0; }
   .legend-card .desc { font-size: 11px; color: #c8ffe0; }
-  .legend-card .meaning { font-size: 11px; color: #5a8a6e; font-style: italic; margin-top: 4px; }
+  .legend-card .meaning { font-size: 11px; color: #8ab8a0; font-style: italic; margin-top: 4px; }
   .normal h3 { color: #00ff78; } .arr h3 { color: #ffcc00; } .arrest h3 { color: #ff2244; }
-  .term { color: #00ff78; font-weight: 500; }
-  .dim { color: #5a8a6e; font-size: 11px; }
+  .term { color: #00ff78; font-weight: 600; }
+  .vb { background: #0d1210; border: 1px solid rgba(0,255,120,0.08); padding: 10px 14px; margin: 8px 0; font-size: 12px; }
+  .vn { color: #00ff78; font-weight: 600; }
+  .vd { color: #8ab8a0; }
+  .it { display: inline-block; background: rgba(0,255,120,0.06); border: 1px solid rgba(0,255,120,0.15); color: #00ff78; font-size: 10px; font-weight: 600; padding: 2px 8px; margin: 2px 2px; letter-spacing: 0.5px; }
+  .color-row { display: flex; align-items: center; gap: 6px; margin: 3px 0 3px 20px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -35,98 +40,168 @@
   <a class="back-link" href="index.html">Back to Dashboard</a>
   <a class="nav-link" href="#view1">View 1: ECG</a>
   <a class="nav-link" href="#view2">View 2: Sankey</a>
-  <a class="nav-link" href="#view3">View 3: Explorer</a>
+  <a class="nav-link" href="#view3">View 3: Recovery</a>
+  <a class="nav-link" href="#links">How Views Connect</a>
 </div>
 
-<h1>HOW TO READ THIS DASHBOARD</h1>
-<p class="dim">This dashboard visualizes 5,000 healthcare ransomware incidents across 2024. Three bidirectionally linked views let you explore temporal patterns, attack pathways, and incident-level details.</p>
+<h1>DASHBOARD GUIDE</h1>
+<p class="subtitle">Healthcare Ransomware 2024 | 5,000 simulated incidents across hospitals, clinics, pharmacies, research labs, and insurance organizations. All three views are bidirectionally linked: actions in any view update the others.</p>
 
-<!-- VIEW 1 -->
+<!-- ==================== VIEW 1 ==================== -->
 <h2 id="view1">VIEW 1: ECG MONITOR</h2>
-<p>Each peak represents one month of 2024. The waveform shape encodes the cybersecurity severity of that month:</p>
+<p>A cardiac-monitor metaphor showing the cybersecurity health of each month in 2024. Each heartbeat peak represents one month. The waveform shape encodes severity: healthy months produce a clean heartbeat, while severely impacted months degrade into arrhythmia and ultimately flatline.</p>
 
 <div class="legend-row">
   <div class="legend-card normal">
     <h3>Normal Sinus Rhythm</h3>
     <canvas id="c1" height="50"></canvas>
-    <div class="desc">SEVERITY 0-40. Strong, regular P-QRS-T pattern.</div>
-    <div class="meaning">= Low infection rates, fast recovery, backups intact.</div>
+    <div class="desc">SEVERITY 0 to 40. Clean, regular P-QRS-T complex.</div>
+    <div class="meaning">Low infection rates, fast recovery, backups intact. The sector is healthy.</div>
   </div>
   <div class="legend-card arr">
     <h3>Arrhythmia</h3>
     <canvas id="c2" height="50"></canvas>
-    <div class="desc">SEVERITY 40-65. Irregular rhythm, variable peaks.</div>
-    <div class="meaning">= Rising infections, slower recovery, some backups compromised.</div>
+    <div class="desc">SEVERITY 40 to 65. Irregular rhythm, variable peaks.</div>
+    <div class="meaning">Rising infections, slower recovery, some backups compromised. The sector is under stress.</div>
   </div>
   <div class="legend-card arrest">
-    <h3>Cardiac Arrest</h3>
+    <h3>Cardiac Arrest / Flatline</h3>
     <canvas id="c3" height="50"></canvas>
-    <div class="desc">SEVERITY 65-100. Chaotic fibrillation to flatline.</div>
-    <div class="meaning">= Severe infections, weeks of downtime, data unrecoverable.</div>
+    <div class="desc">SEVERITY 65 to 100. Chaotic fibrillation to flatline.</div>
+    <div class="meaning">Severe infections, weeks of downtime, data unrecoverable. The data has flatlined.</div>
   </div>
 </div>
 
-<h3>Severity Score Calculation</h3>
-<p>Each incident's severity is a weighted composite of four factors:</p>
-<p><span class="term">Infection Rate</span> (30%): ransomware infection rate, normalized against max (90%).</p>
-<p><span class="term">Recovery Time</span> (25%): days to recover, normalized against max (120 days).</p>
-<p><span class="term">Data Loss</span> (25%): inverse of data restored %. Higher loss = higher severity.</p>
-<p><span class="term">Backup Compromise</span> (20%): binary. Compromised backups add full 20%.</p>
-<p>Monthly scores are averaged, then stretched to 0-100 using percentile normalization. Months with n=0 incidents flatline.</p>
+<h3>Severity Score (colored numbers above each month)</h3>
+<p>Each incident is scored using a weighted composite of four factors:</p>
+<div class="vb">
+  <p><span class="vn">Infection Rate</span> <span class="vd">(30% weight): percentage of the organization's systems infected by ransomware, normalized against 90%.</span></p>
+  <p><span class="vn">Recovery Time</span> <span class="vd">(25% weight): days to restore operations, normalized against 120 days.</span></p>
+  <p><span class="vn">Data Loss</span> <span class="vd">(25% weight): inverse of data restored percentage. More data lost means higher severity.</span></p>
+  <p><span class="vn">Backup Compromise</span> <span class="vd">(20% weight): whether backups were destroyed. If yes, the full 20% is added.</span></p>
+</div>
+<p>Monthly severity is the average composite across all incidents in that month, then normalized to 0-100 against the selected organization type(s). The number's color matches the waveform: green for low severity, yellow for moderate, red for critical. Months with no incidents show a dashed line and "--".</p>
+
+<h3>Incident Count (n= below each month)</h3>
+<p>Shows how many ransomware incidents occurred in that month for the current selection. Updates as you filter by organization type, Sankey path, or time range.</p>
+
+<h3>Organization Type Filter (buttons in the View 1 header)</h3>
+<p>Filter all three views by the type of healthcare organization affected:</p>
+<div class="vb">
+  <p><span class="vn">Hospital</span> <span class="vd">: large healthcare facilities with extensive patient data and critical care systems.</span></p>
+  <p><span class="vn">Clinic</span> <span class="vd">: smaller outpatient facilities, often with less IT infrastructure.</span></p>
+  <p><span class="vn">Pharma</span> <span class="vd">: pharmaceutical companies with research data and supply chain systems.</span></p>
+  <p><span class="vn">Lab</span> <span class="vd">: medical research institutions with sensitive experimental data.</span></p>
+  <p><span class="vn">Insurance</span> <span class="vd">: health insurance companies with extensive patient records and financial data.</span></p>
+</div>
+<p>Click multiple buttons to combine types. Click "All" or the &#x21BB; reset icon to clear the filter.</p>
+
+<h3>Severity Gradient Bar (below the ECG)</h3>
+<p>A color reference showing the severity scale: green (low) through yellow (moderate) to red (critical). These colors match the waveform traces and the severity score numbers above each month.</p>
 
 <h3>Interactions</h3>
-<p>Brush across months to filter both views below. Select one or more organization types to filter all views. Incident counts (n=) update below each month.</p>
+<p><span class="it">Brush</span> Drag horizontally across months to select a time range. Views 2 and 3 update to show only incidents from those months. The selection persists until you click to clear it.</p>
+<p><span class="it">Org Filter</span> Click one or more organization type buttons to filter all views. Sankey path selections are preserved when changing org type.</p>
 
-<!-- VIEW 2 -->
+<!-- ==================== VIEW 2 ==================== -->
 <h2 id="view2">VIEW 2: ATTACK PATHOLOGY (SANKEY DIAGRAM)</h2>
-<p>Traces how incidents flow through six stages from entry to outcome. Band thickness shows proportional flow volume.</p>
+<p>Traces how each ransomware incident flows through six stages from initial entry to recovery outcome. Band thickness shows the proportional volume of incidents taking each path. Thicker bands mean more incidents followed that route.</p>
 
 <h3>Stage 1: Entry Vector</h3>
 <p>How the ransomware initially gained access to the organization:</p>
-<p><span class="term">Compromised Credentials</span>: attackers obtained valid login credentials (stolen passwords, credential stuffing, purchased from dark web).</p>
-<p><span class="term">Exploited Vulnerability</span>: attackers exploited an unpatched software vulnerability (outdated systems, zero-day exploits).</p>
-<p><span class="term">Phishing Email</span>: malicious email tricked a user into clicking a link or opening an attachment.</p>
-<p><span class="term">RDP Exploit</span>: attackers gained access through exposed Remote Desktop Protocol services.</p>
-<p><span class="term">Malicious Website</span>: drive-by download or watering hole attack through a compromised website.</p>
-<p><span class="term">Infected Removable Media</span>: USB drives or other physical media carrying malware.</p>
+<div class="vb">
+  <p><span class="vn">Compromised Credentials</span> <span class="vd">: attackers obtained valid login credentials through stolen passwords, credential stuffing, or dark web purchases.</span></p>
+  <p><span class="vn">Exploited Vulnerability</span> <span class="vd">: attackers exploited an unpatched software vulnerability, including outdated systems or zero-day exploits.</span></p>
+  <p><span class="vn">Phishing Email</span> <span class="vd">: a malicious email tricked a user into clicking a link or opening an infected attachment.</span></p>
+  <p><span class="vn">RDP Exploit</span> <span class="vd">: attackers gained access through exposed Remote Desktop Protocol services, common in healthcare for remote access.</span></p>
+  <p><span class="vn">Malicious Website</span> <span class="vd">: drive-by download or watering hole attack through a compromised or malicious website.</span></p>
+  <p><span class="vn">Infected Removable Media</span> <span class="vd">: USB drives or other physical media carrying malware, introduced into the network.</span></p>
+</div>
 
-<h3>Stage 2: Data Encryption</h3>
-<p>Whether the ransomware successfully encrypted the organization's data. <span class="cs" style="background:#3a9a5a"></span>Yes = encrypted. <span class="cs" style="background:#c44040"></span>No = not encrypted.</p>
+<h3>Stage 2: Data Encrypted</h3>
+<p>Whether the ransomware successfully encrypted the organization's data, rendering it inaccessible until a decryption key is provided (usually for payment).</p>
+<p><span class="cs" style="background:#3a9a5a"></span> <strong>Yes</strong> = data was encrypted. <span class="cs" style="background:#c44040"></span> <strong>No</strong> = encryption was prevented or failed.</p>
 
 <h3>Stage 3: Data Stolen</h3>
-<p>Whether attackers exfiltrated (stole) copies of the data before or during encryption. This is critical for healthcare as stolen patient records trigger HIPAA violations and privacy breaches.</p>
+<p>Whether attackers exfiltrated (stole) copies of the data before or during encryption. This is a double threat: even if data is recovered, stolen patient records can trigger privacy violations and regulatory consequences.</p>
 
 <h3>Stage 4: Backup Lost</h3>
-<p>Whether the organization's backup systems were also compromised. Backup loss dramatically increases recovery time and ransom payment likelihood.</p>
+<p>Whether the organization's backup systems were also compromised or destroyed. Backup loss is one of the strongest predictors of extended recovery time and ransom payment, because the organization has no fallback to restore from.</p>
 
 <h3>Stage 5: Paid Ransom</h3>
-<p>Whether the organization paid the ransom demand. Payment does not guarantee data recovery.</p>
+<p>Whether the organization paid the ransom demand. Payment does not guarantee full data recovery and may fund further attacks against other organizations.</p>
 
 <h3>Stage 6: Recovery Outcome</h3>
-<p>Percentage of data the organization ultimately recovered:</p>
-<p><span class="cs" style="background:#c03030"></span> <strong>&lt; 25%</strong>: catastrophic loss. <span class="cs" style="background:#c08030"></span> <strong>25-50%</strong>: severe loss. <span class="cs" style="background:#6a9a4a"></span> <strong>50-75%</strong>: partial recovery. <span class="cs" style="background:#2a8a50"></span> <strong>75-100%</strong>: good recovery.</p>
+<p>The percentage of data the organization ultimately recovered, regardless of method:</p>
+<p>
+  <span class="cs" style="background:#c03030"></span> <strong>&lt; 25%</strong> catastrophic loss &nbsp;
+  <span class="cs" style="background:#c08030"></span> <strong>25-50%</strong> severe loss &nbsp;
+  <span class="cs" style="background:#6a9a4a"></span> <strong>50-75%</strong> partial recovery &nbsp;
+  <span class="cs" style="background:#2a8a50"></span> <strong>75-100%</strong> good recovery
+</p>
+
+<h3>Visual Encoding</h3>
+<p>When nodes are selected, the diagram updates visually: matching bands turn neon-colored and adjust thickness to show filtered proportions, while non-matching bands dim to near-invisible. Nodes with zero matching incidents also dim, making it immediately clear which paths are active in your selection.</p>
 
 <h3>Interactions</h3>
-<p>Click nodes to build a path filter (multi-select per column, OR within column, AND across columns). Band thickness adjusts to show filtered proportions. Hover over any node to see incident count and percentage. Nodes with no matching incidents show a red warning on hover.</p>
+<p><span class="it">Click Node</span> Select one or more nodes per column to build a path filter. Selections within the same column combine with OR logic (e.g., "Phishing OR RDP"), while selections across columns combine with AND logic (e.g., "Phishing AND Encrypted: Yes"). The ECG recomputes and View 3 updates for matching incidents only.</p>
+<p><span class="it">Hover Node</span> Shows a tooltip with the incident count, percentage of the current population, organization type, and time range. If clicking a node would produce zero results with the current selection, a red warning appears instead.</p>
+<p><span class="it">Hover Band</span> Highlights the source and target column backgrounds with a blue glow, and the column titles turn green.</p>
+<p><span class="it">&#x21BB; Reset</span> Clears all node selections and restores the default unfiltered view.</p>
 
-<!-- VIEW 3 -->
-<h2 id="view3">VIEW 3: INCIDENT EXPLORER</h2>
+<!-- ==================== VIEW 3 ==================== -->
+<h2 id="view3">VIEW 3: RECOVERY ANALYSIS</h2>
+<p>A scatter plot exploring what organizational factors correlate with faster or slower recovery from ransomware attacks. Each dot is one incident. The X-axis is fixed to <strong>Recovery Time (Days)</strong> since recovery speed is the ultimate outcome of interest: dots on the left recovered quickly, dots on the right took longer.</p>
 
-<h3>Scatter Mode</h3>
-<p>Each dot is one ransomware incident, colored by severity (green = low, red = critical). Select any two numeric dimensions for X and Y axes: Infection Rate, Recovery Days, Data Restored, Facilities Affected, or Incidents count. Brush to select dots and see which months and pathways they correspond to in Views 1 and 2.</p>
+<h3>"Measure" Dropdown (Y-axis)</h3>
+<p>Choose what to plot against recovery time:</p>
+<div class="vb">
+  <p><span class="vn">Infection Rate</span> <span class="vd">: percentage of the organization's systems that were infected. Higher values indicate more widespread compromise. Helps answer: "Do more infected organizations take longer to recover?"</span></p>
+  <p><span class="vn">Data Recovery Rate</span> <span class="vd">: percentage of data ultimately recovered. Helps answer: "Do organizations with faster recovery also recover more data?"</span></p>
+  <p><span class="vn">Facilities Impacted</span> <span class="vd">: number of physical facilities (buildings, campuses) affected. Helps answer: "Does geographic spread affect recovery time?"</span></p>
+</div>
 
-<h3>Grouped Mode</h3>
-<p>The same dots rearrange into categorical columns grouped by: Monitoring Frequency, Threats Tracked, Entry Method, or Organization Size. White horizontal lines show the median value per column. This immediately reveals which defensive postures lead to better outcomes. For example, switching to Grouped by Monitoring Frequency shows that monthly-monitored organizations cluster at higher infection rates than daily-monitored ones.</p>
+<h3>"Compare" Dropdown (dot color)</h3>
+<p>Change what the dot colors represent to visually compare groups:</p>
+<div class="vb">
+  <p><span class="vn">Overall Severity</span> <span class="vd">: the composite severity score. A green-to-yellow-to-red gradient:</span></p>
+  <div class="color-row"><span class="cs" style="background:#00ff78"></span> Low severity <span class="cs" style="background:#ffcc00;margin-left:8px;"></span> Moderate <span class="cs" style="background:#ff2244;margin-left:8px;"></span> Critical</div>
+  <p style="margin-top:10px;"><span class="vn">Monitoring Frequency</span> <span class="vd">: how often the organization actively monitors for cyber threats:</span></p>
+  <div class="color-row"><span class="cs" style="background:#00ffcc"></span> More than 1x/day</div>
+  <div class="color-row"><span class="cs" style="background:#00ff78"></span> Daily</div>
+  <div class="color-row"><span class="cs" style="background:#50aaff"></span> Weekly</div>
+  <div class="color-row"><span class="cs" style="background:#ff6644"></span> Monthly</div>
+  <p style="margin-top:10px;"><span class="vn">Threats Tracked</span> <span class="vd">: how many distinct cyber threat types the organization actively monitors:</span></p>
+  <div class="color-row"><span class="cs" style="background:#ff5566"></span> 1-50 threats</div>
+  <div class="color-row"><span class="cs" style="background:#ffaa30"></span> 50-350 threats</div>
+  <div class="color-row"><span class="cs" style="background:#00ff78"></span> 350+ threats</div>
+</div>
+<p>Key insight: switching to "Monitoring Frequency" reveals that daily and sub-daily monitored organizations (green/cyan) cluster on the left (faster recovery), while monthly-monitored organizations (orange) spread to the right (slower recovery).</p>
 
-<h3>Drill-Down</h3>
-<p>Click any dot to see the full incident record: organization type and size, entry method, infection rate, recovery time, data restored, facilities affected, and all binary outcomes (encrypted, stolen, backup lost, ransom paid, monitoring frequency, threats tracked).</p>
+<h3>Drill-Down Detail Panel</h3>
+<p>Click any dot to see the full incident record in a panel: organization type and size, entry method, infection rate, recovery time, data restored percentage, facilities affected, and all binary outcomes (encrypted, stolen, backup lost, ransom paid). Also shows monitoring frequency and threats tracked. Hovering over a previously selected dot also displays its details.</p>
 
-<h3>Centroid Markers</h3>
-<p>When dots are brush-selected, two diamond markers appear: a gray diamond at the center of all visible data (baseline), and a green diamond at the center of the selected subset. The distance between them shows how different your selection is from the overall population.</p>
+<h3>Interactions</h3>
+<p><span class="it">Click Dot</span> Toggle individual incidents into your selection. Selected dots get a white border and enlarge. The ECG (View 1) recomputes severity for just those incidents, and the Sankey (View 2) adjusts band thickness to show their attack pathways.</p>
+<p><span class="it">Brush</span> Drag a rectangle to add all enclosed dots to your selection. The brush rectangle clears after release so you can continue clicking individual dots or brush again to add more.</p>
+<p><span class="it">&#x21BB; Reset</span> Clears all dot selections and restores Views 1 and 2 to their pre-selection state.</p>
+
+<!-- ==================== CONNECTIONS ==================== -->
+<h2 id="links">HOW THE VIEWS CONNECT</h2>
+<p>All three views are bidirectionally linked. Every action in one view propagates to the others:</p>
+<div class="vb">
+  <p><span class="vn">View 1 &rarr; Views 2 and 3</span> <span class="vd">: brushing months in the ECG filters the Sankey diagram and scatter plot to show only incidents from those months.</span></p>
+  <p><span class="vn">View 2 &rarr; Views 1 and 3</span> <span class="vd">: clicking Sankey nodes recomputes the ECG waveforms for matching incidents and filters the scatter plot to show only those dots.</span></p>
+  <p><span class="vn">View 3 &rarr; Views 1 and 2</span> <span class="vd">: selecting dots in the scatter plot recomputes ECG severity for those specific incidents and adjusts Sankey band thickness to show their attack pathways.</span></p>
+  <p><span class="vn">Org Filter &rarr; All Views</span> <span class="vd">: selecting organization types in View 1's header filters all three views. Sankey path selections persist across org type changes.</span></p>
+</div>
+
+<p style="margin-top:20px;">The three views tell a connected story: View 1 reveals <strong>WHEN</strong> attacks are most severe, View 2 shows <strong>HOW</strong> they unfold, and View 3 explores <strong>WHAT</strong> helps organizations recover faster.</p>
 
 </div>
 
 <script>
+// ECG waveform drawing for the legend cards
 var sd=1;function sR(){sd=(sd*16807)%2147483647;return(sd-1)/2147483646;}
 function drawW(id,sev,col){
   var cv=document.getElementById(id);var ctx=cv.getContext('2d');

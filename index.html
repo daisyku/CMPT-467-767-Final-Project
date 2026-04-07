@@ -34,7 +34,7 @@
   }
 
   .top-bar h1 {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 600;
     letter-spacing: 4px;
     color: #00ff78;
@@ -244,7 +244,8 @@
     padding: 10px 14px;
     font-size: 11px;
     z-index: 100;
-    min-width: 260px;
+    min-width: 320px;
+    max-width: 360px;
     pointer-events: auto;
   }
 
@@ -259,13 +260,25 @@
   .detail-row {
     display: flex;
     justify-content: space-between;
-    padding: 2px 0;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 3px 0;
     border-bottom: 1px solid rgba(0,255,120,0.06);
   }
 
-  .detail-label { color: #5a8a6e; }
+  .detail-label {
+    color: #5a8a6e;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 
-  .detail-val { color: #c8ffe0; font-weight: 500; }
+  .detail-val {
+    color: #c8ffe0;
+    font-weight: 500;
+    text-align: right;
+    word-break: break-word;
+    min-width: 0;
+  }
 
   .detail-val.bad { color: #ff4444; }
   .detail-val.good { color: #00ff78; }
@@ -286,7 +299,7 @@
 <div class="dashboard">
 
   <div class="top-bar">
-    <h1>HEALTHCARE RANSOMWARE 2024</h1>
+    <h1>HEALTHCARE INDUSTRY RANSOMWARE ATTACKS in 2024</h1>
     <button class="help-btn" onclick="openExplanation()">Guide</button>
   </div>
 
@@ -307,7 +320,7 @@
       </div>
     </div>
     <svg id="ecg-svg"></svg>
-    <div class="brush-info" id="brush-info">Brush months to filter views below. Click Sankey nodes to build a path filter.</div>
+    <div class="brush-info" id="brush-info">Brush months to filter views below.</div>
     <div class="severity-bar">
       <span>LOW SEVERITY</span><div class="severity-gradient"></div><span>CRITICAL</span>
     </div>
@@ -336,7 +349,7 @@
 
     <div class="view-panel scatter-panel" style="position:relative;">
       <div class="view-label">
-        <span>Recovery Analysis (click or brush to select, updates all views)</span>
+        <span>Recovery Analysis (click or brush to select)</span>
         <button class="reset-btn" id="v3-clear" onclick="clearDotSelection()" title="Reset selection">&#x21BB;</button>
       </div>
       <div class="view-controls">
@@ -399,6 +412,10 @@ function resetOrgFilter() {
   selectedOrgs = new Set();
   document.querySelectorAll('.org-btn').forEach(function(b) { b.classList.remove('active'); });
   document.querySelector('.org-btn[data-org="All"]').classList.add('active');
+  // Also clear brush selection so view 1 fully resets
+  brushedMonths = null;
+  savedBrushExtent = null;
+  document.getElementById('brush-info').innerHTML = 'Brush months to filter views below.';
   applyOrgFilter();
 }
 var brushedMonths = null;
@@ -517,7 +534,7 @@ function updateSankeyInfo() {
 }
 
 function clearStageHighlights() {
-  d3.selectAll('.stage-title').attr('fill', '#5a8a6e');
+  d3.selectAll('.stage-title').attr('fill', '#a0d4b8');
   d3.selectAll('.stage-title-bg').attr('opacity', 0);
   d3.selectAll('.col-bg').attr('fill', 'rgba(0,0,0,0)');
 }
@@ -724,7 +741,7 @@ function renderECG(data) {
   var monthly = aggregateMonthly(data);
   var severities = normalizeMonthly(monthly);
   var container = document.querySelector('.ecg-panel');
-  var margin = { top: 30, right: 20, bottom: 34, left: 80 };
+  var margin = { top: 30, right: 40, bottom: 34, left: 130 };
   var width = container.clientWidth - margin.left - margin.right;
   var height = 160;
 
@@ -762,11 +779,11 @@ function renderECG(data) {
 
   var highlightGroup = g.append('g').attr('class', 'ecg-highlights');
 
-  // Severity score axis label (left side, vertical)
+  // Severity score axis label (horizontal, left of scores, in line with them)
   g.append('text')
-    .attr('x', -(height / 2)).attr('y', -60)
-    .attr('transform', 'rotate(-90)')
-    .attr('text-anchor', 'middle')
+    .attr('x', -10).attr('y', -8)
+    .attr('text-anchor', 'end')
+    .attr('dominant-baseline', 'middle')
     .attr('fill', '#c8ffe0').attr('font-size', 10).attr('font-weight', 600)
     .attr('font-family', "'IBM Plex Mono', monospace")
     .attr('letter-spacing', '1px').text('SEVERITY SCORE');
@@ -893,11 +910,11 @@ function renderECG(data) {
       .text('n=' + monthly[m].count);
   }
 
-  // Incidents axis label (left side, vertical)
+  // Incidents axis label (horizontal, left of n=X counts, in line with them)
   g.append('text')
-    .attr('x', -(height / 2)).attr('y', -42)
-    .attr('transform', 'rotate(-90)')
-    .attr('text-anchor', 'middle')
+    .attr('x', -10).attr('y', height + 26)
+    .attr('text-anchor', 'end')
+    .attr('dominant-baseline', 'middle')
     .attr('fill', '#8ab8a0').attr('font-size', 9).attr('font-weight', 500)
     .attr('font-family', "'IBM Plex Mono', monospace")
     .text('# INCIDENTS / MONTH');
@@ -938,10 +955,9 @@ function renderECG(data) {
   var brushGroup = g.append('g').attr('class', 'ecg-brush').call(brush);
 
   // Re-apply brush selection if it existed before this re-render
+  // Use savedBrushExtent (pixel coordinates) directly to avoid off-by-one drift
   if (savedBrushExtent && brushedMonths) {
-    var newX0 = xScale(brushedMonths[0]);
-    var newX1 = xScale(brushedMonths[1] + 1);
-    brushGroup.call(brush.move, [newX0, newX1]);
+    brushGroup.call(brush.move, savedBrushExtent);
   }
 
   // Store refs for cross-view highlighting
@@ -1213,7 +1229,7 @@ function renderSankey(data) {
       .attr('text-anchor', 'middle')
       .attr('font-size', 13)
       .attr('font-weight', 600)
-      .attr('fill', '#5a8a6e')
+      .attr('fill', '#a0d4b8')
       .attr('letter-spacing', '1px')
       .attr('font-family', "'IBM Plex Mono', monospace")
       .text(label);
@@ -1683,7 +1699,7 @@ function updateDotAppearance() {
     dots.attr('opacity', 0.85).attr('stroke', 'none').attr('r', 3)
       .attr('fill', function(d) { return getCategoryColor(d); });
   } else {
-    dots.attr('opacity', function(d) { return selectedDotIds.has(d.id) ? 0.95 : 0.12; })
+    dots.attr('opacity', function(d) { return selectedDotIds.has(d.id) ? 0.95 : 0.35; })
       .attr('stroke', function(d) { return selectedDotIds.has(d.id) ? '#fff' : 'none'; })
       .attr('stroke-width', function(d) { return selectedDotIds.has(d.id) ? 1.5 : 0; })
       .attr('r', function(d) { return selectedDotIds.has(d.id) ? 5 : 2; });
@@ -1871,7 +1887,7 @@ function highlightV3(ids) {
     dots.attr('opacity', 0.85).attr('stroke', 'none').attr('r', 3);
     return;
   }
-  dots.attr('opacity', function(d) { return ids.has(d.id) ? 0.95 : 0.12; })
+  dots.attr('opacity', function(d) { return ids.has(d.id) ? 0.95 : 0.35; })
     .attr('stroke', function(d) { return ids.has(d.id) ? '#fff' : 'none'; })
     .attr('r', function(d) { return ids.has(d.id) ? 4 : 2; });
 }

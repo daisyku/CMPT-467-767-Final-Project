@@ -955,7 +955,6 @@ function renderECG(data) {
   var brushGroup = g.append('g').attr('class', 'ecg-brush').call(brush);
 
   // Re-apply brush selection if it existed before this re-render
-  // Use savedBrushExtent (pixel coordinates) directly to avoid off-by-one drift
   if (savedBrushExtent && brushedMonths) {
     brushGroup.call(brush.move, savedBrushExtent);
   }
@@ -998,7 +997,6 @@ function renderSankey(data) {
   sankeyLinkIncidents = {};
   sankeyNodeIncidents = {};
 
-  // Node order: Yes (bad) BEFORE No (good) at each stage
   // Recovery: worst to best (< 25% at top, 75-100% at bottom)
   var nodeNames = [
     'Compromised Credentials', 'Exploited Vulnerability', 'Phishing Email',
@@ -1330,11 +1328,9 @@ function renderSankey(data) {
       var count, contextLabel, denomLabel;
 
       if (hasSankeySelection()) {
-        // Count how many of the currently filtered incidents match this node
         count = sankeyFiltered.filter(function(inc) { return matchesNode(inc, d.name); }).length;
         denomLabel = sankeyFiltered.length.toLocaleString() + ' filtered incidents';
 
-        // Also check if adding this node would produce 0 results
         var testNodes = {};
         Object.entries(selectedSankeyNodes).forEach(function(pair) {
           testNodes[pair[0]] = new Set(pair[1]);
@@ -1390,7 +1386,7 @@ function renderSankey(data) {
       selectedSankeyNodes[stage] = new Set();
     }
 
-    // Toggle this node
+    // Toggle node
     if (selectedSankeyNodes[stage].has(d.name)) {
       selectedSankeyNodes[stage].delete(d.name);
       if (selectedSankeyNodes[stage].size === 0) {
@@ -1400,7 +1396,6 @@ function renderSankey(data) {
       selectedSankeyNodes[stage].add(d.name);
     }
 
-    // Check if this selection would produce any results
     var testFiltered = filterBySankeyNodes(monthFiltered);
 
     if (testFiltered.length === 0) {
@@ -1541,7 +1536,6 @@ function applyV3Selection(selectedIds) {
   v3SelectedIds = selectedIds;
   var v3Data = sankeyFiltered.filter(function(d) { return selectedIds.has(d.id); });
 
-  // Re-render ECG with only selected incidents
   renderECG(v3Data);
 
   // Adjust Sankey band widths for selected incidents
@@ -1788,7 +1782,6 @@ function renderScatter(data) {
     return;
   }
 
-  // Fixed X = Recovery Days
   var xVal = function(d) { return d.recovery_time; };
   var yVal = function(d) { return d[scatterY]; };
   var xScale = d3.scaleLinear()
